@@ -1,0 +1,16 @@
+# R project stuff
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+BASE.Rproj
+
+# directories not to be tracked
+external_files
+plots
+intermediates
+
+
+# emacs back-ups
+*~
+
