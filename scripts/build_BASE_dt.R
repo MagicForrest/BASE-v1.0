@@ -183,6 +183,7 @@ lu_dt[, NaturalChange := pmax(Natural - Natural1, 0)]
 lu_dt[, deltaNatural40 := data.table::frollsum(NaturalChange, align = "right", n = 40), by=c("Lon", "Lat")]
 lu_dt[, deltaNatural30 := data.table::frollsum(NaturalChange, align = "right", n = 30), by=c("Lon", "Lat")]
 lu_dt[, deltaNatural20 := data.table::frollsum(NaturalChange, align = "right", n = 20), by=c("Lon", "Lat")]
+lu_dt[, deltaNatural10 := data.table::frollsum(NaturalChange, align = "right", n = 10), by=c("Lon", "Lat")]
 lu_dt[, Natural1 := NULL]
 lu_dt[, NaturalChange := NULL]
 
@@ -263,6 +264,7 @@ if(!file.exists(FWI_file_path)) {
   
   #### TEMPERATUE ####
   # also add the mean monthly temperature from a separate netcdf file
+  # here I uused the quite cool remapDataTableToReferenceGrid() function instead of the normal resample and round - but I am not sure why I did this!
   temp_rast <- rast(file.path(climate_dir, "TMean_ERA5-LAND_Historical_monmean.nc"))
   temp_dt <- as.data.table(temp_rast, xy = TRUE)
   setnames(temp_dt, c("Lon", "Lat", format(time(temp_rast), "%Y-%m")))
@@ -277,7 +279,9 @@ if(!file.exists(FWI_file_path)) {
   
   #### SOLAR RADIATION ####
   # also add the mean monthly solar radiation from a separate netcdf file
+  # here do teh same resampling and round procedures to match the grid
   rad_rast <- rast(file.path(climate_dir, "SWR_ERA5-LAND_Historical_monmean.nc"))
+  rad_rast <- resample(rad_rast, ref_grid_terra, "near")
   rad_dt <- as.data.table(rad_rast, xy = TRUE)
   setnames(rad_dt, c("Lon", "Lat", format(time(rad_rast), "%Y-%m")))
   rad_dt <- melt.data.table(rad_dt, id.vars = c("Lon", "Lat"))
@@ -286,7 +290,9 @@ if(!file.exists(FWI_file_path)) {
   setnames(rad_dt, "value", "Rad")
   rad_dt[ , Year := as.integer(Year)]
   rad_dt[ , Month := as.integer(Month)]
-  rad_dt <- remapDataTableToReferenceGrid(rad_dt,ref_grid_dt )
+
+  rad_dt[ , Lon := round(Lon, 7)]
+  rad_dt[ , Lat := round(Lat, 7)]
   FWI_and_climate_dt <- merge(FWI_and_climate_dt, rad_dt, by = c("Lon","Lat", "Year", "Month"))
   
   
@@ -320,7 +326,7 @@ setnames(prec_dt, "Prec", "value")
 prec_dt[ , Date := as.Date(paste(Year, Month, 15, sep = "-"))]
 setkey(prec_dt, "Lon", "Lat", "Date")
 tic()
-prec_dt <- add_long_term_means_and_deviations(prec_dt, gs_dt) 
+prec_dt <- add_long_term_means_and_deviations(prec_dt, gs_dt, agg_fun = sum) 
 toc()
 setnames(prec_dt, gsub(pattern = "value", replacement = "Prec", names(prec_dt)))
 prec_dt[, Date := NULL]
@@ -329,28 +335,28 @@ FWI_dt <- merge(FWI_dt, prec_dt, by = c("Lon","Lat", "Year", "Month"))
 
 # temp
 temp_dt <- FWI_dt[ , c("Lon", "Lat", "Year", "Month", "Temp")]
-setnames(temp_dt, "temp", "value")
+setnames(temp_dt, "Temp", "value")
 temp_dt[ , Date := as.Date(paste(Year, Month, 15, sep = "-"))]
 setkey(temp_dt, "Lon", "Lat", "Date")
 tic()
-temp_dt <- add_long_term_means_and_deviations(temp_dt, gs_dt) 
+temp_dt <- add_long_term_means_and_deviations(temp_dt, gs_dt, agg_fun = mean) 
 toc()
-setnames(temp_dt, gsub(pattern = "value", replacement = "temp", names(temp_dt)))
+setnames(temp_dt, gsub(pattern = "value", replacement = "Temp", names(temp_dt)))
 temp_dt[, Date := NULL]
-temp_dt[, temp := NULL]
+temp_dt[, Temp := NULL]
 FWI_dt <- merge(FWI_dt, temp_dt, by = c("Lon","Lat", "Year", "Month"))
 
 # rad
 rad_dt <- FWI_dt[ , c("Lon", "Lat", "Year", "Month", "Rad")]
-setnames(rad_dt, "rad", "value")
+setnames(rad_dt, "Rad", "value")
 rad_dt[ , Date := as.Date(paste(Year, Month, 15, sep = "-"))]
 setkey(rad_dt, "Lon", "Lat", "Date")
 tic()
-rad_dt <- add_long_term_means_and_deviations(rad_dt, gs_dt) 
+rad_dt <- add_long_term_means_and_deviations(rad_dt, gs_dt, agg_fun = mean) 
 toc()
-setnames(rad_dt, gsub(pattern = "value", replacement = "rad", names(rad_dt)))
+setnames(rad_dt, gsub(pattern = "value", replacement = "Rad", names(rad_dt)))
 rad_dt[, Date := NULL]
-rad_dt[, rad := NULL]
+rad_dt[, Rad := NULL]
 FWI_dt <- merge(FWI_dt, rad_dt, by = c("Lon","Lat", "Year", "Month"))
 
 
@@ -656,6 +662,9 @@ master_full_dt$GDP_capita[master_full_dt$PopDens == 0] <- 0
 
 #### SAVE FILES ####
 saveRDS(master_full_dt, file.path(base_dir, paste0("master_full_dt_", version, ".rds")))
+
+print(names(master_full_dt))
+
 toc()
 
 

@@ -8,6 +8,7 @@ BASE.Rproj
 # directories not to be tracked
 external_files
 plots
+results
 intermediates
 
 
