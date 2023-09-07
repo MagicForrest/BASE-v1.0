@@ -1,4 +1,4 @@
-#### PREAMBLE ####
+#### LOAD PACKAGES AND DEFINE RELATIVE PATHS ####
 
 if("DGVMTools" %in% (.packages())){  detach("package:DGVMTools", unload=TRUE) }
 library(mgcv)
@@ -28,18 +28,16 @@ library(here)
 source(here("scripts", "glm_fitting_helper_functions.R"))
 source(here("scripts", "plot_utils.R"))
 
-# input data dir containing large data.tables already constructed with script 
+# input data directory containing large data.tables already constructed with script 
 data_dir <- here("external_files/input_datatables/")
-
-# define paths for output (results and intermediate data)
-top.results.dir <- here("results", "GLMs")
-dir.create(top.results.dir, showWarnings = FALSE, recursive = TRUE)
-top.intermediates.dir <- here("intermediates")
-dir.create(top.intermediates.dir, showWarnings = FALSE, recursive = TRUE)
-
 
 
 #### USER SETTINGS ####
+
+# define the target for the model fitting
+landcover = "Natural"
+target = "BurntFraction"
+dependent_var <- paste(target, landcover, sep = "_")
 
 # do the fitting (if FALSE try to read a previously fitted model)
 do_fit <- TRUE
@@ -48,10 +46,12 @@ do_fit <- TRUE
 plot_terms <- TRUE
 
 # data to use
-data_version <- "7.0_fixed_FWI_full_FAPAR"
+data_version <- "8.0_treecover"
 
-# metric table name for saving (will be modified if it exists)
-summary_table_name <- "summary_metrics_v3"
+# version
+fit_batch_version <- "v6"
+summary_table_name <- paste("summary_metrics", fit_batch_version, sep = "_")
+
 
 # years for fitting
 first_year_available <- 2002
@@ -61,10 +61,10 @@ fit_years <- (first_year_available:last_year_available)[which(first_year_availab
 fit_years <-  first_year_available:(first_year_available+ceiling(length(first_year_available:last_year_available)/2))
 
 # fire size threshold - 0.1 seems to work quite reasonably (see v0.10_newdata plots for Natural)
-min_fire_size_ha <- 0.0
+min_fire_size_ha <- 0.1
 
 # applying scaling or not
-apply_scaling <- FALSE
+apply_scaling <- TRUE
 
 # balance dataset
 balance_dataset <- FALSE
@@ -81,7 +81,7 @@ basis_splines <- "cr"
 
 model_specifications_list <- list()
 
-# A straightforward test with all types of terms
+# # A straightforward test with all types of terms
 # model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
 #                                                                            version_id = "TEST",
 #                                                                            target = "BurntFraction",
@@ -93,122 +93,488 @@ model_specifications_list <- list()
 #                                                                            random_effect_terms = c(),
 #                                                                            smooth_terms = c(),
 #                                                                            select = TRUE)
+# 
+# 
+# #### DEFINE PREVIOUS - The previous baseline model ####
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0("PREVIOUS"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FWI", "PopDens", "HDI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# #### DEFINE 0 - The baseline model ####
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".0_baseline"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# #### DEFINE 1 - Fuel dryness ####
+# # Try models with the other components of the FWI and Tmax
+# # TODO consider Nesterov index, maybe even VPD?
+# all_alt_dryness_predictors <- c("Tmax", "FFMC", "DMC", "DC", "ISI", "BUI", "DSR")
+# for(alt_predictor in all_alt_dryness_predictors) {
+# 
+#   model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                              version_id = paste0(fit_batch_version, ".1_fuel_drying_", alt_predictor),
+#                                                                              target = "BurntFraction",
+#                                                                              family = quasibinomial(link=logit),
+#                                                                              linear_terms = c("Mean_annual_GPP", "FAPAR", alt_predictor, "PopDens", "HDI"),
+#                                                                              quadratic_terms = c(),
+#                                                                              interaction_terms = c(),  # Form "Var*Var2"
+#                                                                              fixed_effect_terms = c("Dominant_type"),
+#                                                                              random_effect_terms = c(),
+#                                                                              smooth_terms = c(),
+#                                                                              select = TRUE)
+# }
+# # TODO - consider multiple/interactions??
+# 
+# 
+# #### DEFINE 2 - Fuel availability ####
+# # TODO add long term Mean_annual_FAPAR, Mean_annual_FAPA, Tree_cover
+# all_alt_fuel_availability_predictors <- c("log_Mean_annual_GPP", "FAPAR12", "Mean_annual_FAPAR", "GPP12", "log_GPP12","AGB_Natural", "AGB_Gridcell",  "log_AGB_Natural", "log_AGB_Gridcell", "Treecover_Natural", "Treecover_Gridcell")
+# for(alt_predictor in all_alt_fuel_availability_predictors) {
+# 
+#   model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                              version_id = paste0(fit_batch_version, ".2_fuel_availability_", alt_predictor),
+#                                                                              target = "BurntFraction",
+#                                                                              family = quasibinomial(link=logit),
+#                                                                              linear_terms = c(alt_predictor, "FAPAR", "FWI", "PopDens", "HDI"),
+#                                                                              quadratic_terms = c(),
+#                                                                              interaction_terms = c(),  # Form "Var*Var2"
+#                                                                              fixed_effect_terms = c("Dominant_type"),
+#                                                                              random_effect_terms = c(),
+#                                                                              smooth_terms = c(),
+#                                                                              select = TRUE)
+# }
+# 
+# #### DEFINE 3 - Fuel curing ####
+# # TODO indices relative to the max?
+# all_alt_fuel_curing_predictors <- c("FAPAR_index", "GPP", "GPP_index")
+# for(alt_predictor in all_alt_fuel_curing_predictors) {
+# 
+#   model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                              version_id = paste0(fit_batch_version, ".3_fuel_curing_", alt_predictor),
+#                                                                              target = "BurntFraction",
+#                                                                              family = quasibinomial(link=logit),
+#                                                                              linear_terms = c("Mean_annual_GPP", alt_predictor, "FWI", "PopDens", "HDI"),
+#                                                                              quadratic_terms = c(),
+#                                                                              interaction_terms = c(),  # Form "Var*Var2"
+#                                                                              fixed_effect_terms = c("Dominant_type"),
+#                                                                              random_effect_terms = c(),
+#                                                                              smooth_terms = c(),
+#                                                                              select = TRUE)
+# }
+# 
+# #### DEFINE 4 - Human Effects ####
+# 
+# # swap urban for population density
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".4_human_Urban"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "Urban", "HDI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# # swap GDP_capita for HDI
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".4_human_HDI_GDP_capita"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "HDI", "GDP_capita"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# # no human effects
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".4_human_None"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# # interactions
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".4_human_PopDensxHDI"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c( "PopDens*HDI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".4_human_UrbanxHDI"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c( "Urban*HDI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".4_human_PopDens_quadratic_HDI"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "HDI"),
+#                                                                            quadratic_terms = c("PopDens"),
+#                                                                            interaction_terms = c( ),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# 
+# 
+# 
+# #### DEFINE 5 - Differing tree species flammability ####
+# 
+# # remove tree types
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".5_tree_flammability_none"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c(),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# # use species types
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_species"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# #### DEFINE 6 - Landscape continuity ####
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".6_continuity_Natural"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI", "Natural"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".6_continuity_Natural_quadratic"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI"),
+#                                                                            quadratic_terms = c("Natural"),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# 
+# #### DEFINE 7 - Topography ####
+# 
+# # Slope, TPI and interaction
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".7_topography_Slope"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI", "Slope"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".7_topography_TPI"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI", "TPI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".7_topography_Slope_and_TPI"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI", "Slope", "TPI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".7_topography_SlopexTPI"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c("Slope*TPI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# 
+# 
+# #### DEFINE 8 - Wind enhancement of RoS ####
+# # simply also include wind speed
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version,".8_windspeed_WindSpeed"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI", "WindSpeed"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# 
+# #### DEFINE 9 - Spotting ####
+# 
+# all_alt_woody_predictors <- c("AGB_Natural", "AGB_Gridcell", "Treecover_Natural", "Treecover_Gridcell")
+# for(alt_predictor in all_alt_woody_predictors) {
+# 
+#   model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                              version_id = paste0(fit_batch_version, ".9_spotting_Windspeedx", alt_predictor),
+#                                                                              target = "BurntFraction",
+#                                                                              family = quasibinomial(link=logit),
+#                                                                              linear_terms = c("FAPAR", "FWI", "PopDens", "HDI"),
+#                                                                              quadratic_terms = c(),
+#                                                                              interaction_terms = c(paste0(alt_predictor,"*WindSpeed")),  # Form "Var*Var2"
+#                                                                              fixed_effect_terms = c("Dominant_type"),
+#                                                                              random_effect_terms = c(),
+#                                                                              smooth_terms = c(),
+#                                                                              select = TRUE)
+# }
+# 
+# #### DEFINE 10 - Land abandonment ####
+# all_land_abandonment_predictors <- c("deltaNatural10", "deltaNatural20", "deltaNatural30", "deltaNatural40")
+# for(alt_predictor in all_land_abandonment_predictors) {
+# 
+#   model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                              version_id = paste0(fit_batch_version, ".10_land_abandonment_", alt_predictor),
+#                                                                              target = "BurntFraction",
+#                                                                              family = quasibinomial(link=logit),
+#                                                                              linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI", alt_predictor),
+#                                                                              quadratic_terms = c(),
+#                                                                              interaction_terms = c(),  # Form "Var*Var2"
+#                                                                              fixed_effect_terms = c("Dominant_type"),
+#                                                                              random_effect_terms = c(),
+#                                                                              smooth_terms = c(),
+#                                                                              select = TRUE)
+# }
 
-#### DEFINE 0 - The baseline model ####
+
+#### DEFINE CANDIDATES ####
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                              version_id = paste0(fit_batch_version, ".Candidate2"),
+#                                                                              target = "BurntFraction",
+#                                                                              family = quasibinomial(link=logit),
+#                                                                              linear_terms = c("Mean_annual_FAPAR", "FAPAR12", "GPP", "FWI", "PopDens", "HDI", "Slope", "TPI"),
+#                                                                              quadratic_terms = c(),
+#                                                                              interaction_terms = c(),  # Form "Var*Var2"
+#                                                                              fixed_effect_terms = c("Dominant_type"),
+#                                                                              random_effect_terms = c(),
+#                                                                              smooth_terms = c(),
+#                                                                              select = TRUE)
+
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate3"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_FAPAR", "GPP_index", "FWI", "PopDens", "HDI", "Slope", "TPI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate4"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Treecover_Gridcell", "FAPAR12", "GPP_index", "FWI", "PopDens", "HDI", "Slope", "TPI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate5"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Treecover_Gridcell", "FAPAR12", "PopDens", "HDI", "Slope", "TPI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c("GPP_index*FWI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate6"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("FAPAR12", "GPP_index", "FWI", "PopDens", "HDI", "Slope", "TPI"),
+#                                                                            quadratic_terms = c("Treecover_Gridcell"),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate7"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Treecover_Gridcell", "GPP12", "GPP_index", "FWI", "PopDens", "HDI", "Slope", "TPI"),
+#                                                                            quadratic_terms = c(),
+#                                                                            interaction_terms = c(),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate8"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("FAPAR12", "PopDens", "HDI", "Slope", "TPI"),
+#                                                                            quadratic_terms = c("Treecover_Gridcell"),
+#                                                                            interaction_terms = c("GPP_index*FWI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate9"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Mean_annual_GPP", "PopDens", "HDI", "Slope", "TPI"),
+#                                                                            quadratic_terms = c("Treecover_Gridcell"),
+#                                                                            interaction_terms = c("GPP_index*FWI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate10"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("FAPAR12", "Mean_annual_GPP", "PopDens", "HDI", "Slope", "TPI"),
+#                                                                            quadratic_terms = c("Treecover_Gridcell"),
+#                                                                            interaction_terms = c("GPP_index*FWI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+
+
 model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = "v3.0_baseline",
+                                                                           version_id = paste0(fit_batch_version, ".Candidate11"),
                                                                            target = "BurntFraction",
                                                                            family = quasibinomial(link=logit),
-                                                                           linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI"),
-                                                                           quadratic_terms = c(),
-                                                                           interaction_terms = c(),  # Form "Var*Var2"
+                                                                           linear_terms = c("log_Mean_annual_GPP", "PopDens", "HDI", "Slope", "TPI"),
+                                                                           quadratic_terms = c("Treecover_Gridcell"),
+                                                                           interaction_terms = c("GPP_index*FWI"),  # Form "Var*Var2"
                                                                            fixed_effect_terms = c("Dominant_type"),
                                                                            random_effect_terms = c(),
                                                                            smooth_terms = c(),
                                                                            select = TRUE)
 
-#### DEFINE 1 - Fuel dryness ####
-# Try models with the other components of the FWI and Tmax
-# TODO consider Nesterov index, maybe even VPD?
-all_alt_dryness_predictors <- c("Tmax", "FFMC", "DMC", "DC", "ISI", "BUI", "DSR") 
-for(alt_predictor in all_alt_dryness_predictors) {
-  
-  model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                             version_id = paste0("v3.1_fuel_drying_", alt_predictor),
-                                                                             target = "BurntFraction",
-                                                                             family = quasibinomial(link=logit),
-                                                                             linear_terms = c("Mean_annual_GPP", "FAPAR", alt_predictor, "PopDens", "HDI"),
-                                                                             quadratic_terms = c(),
-                                                                             interaction_terms = c(),  # Form "Var*Var2"
-                                                                             fixed_effect_terms = c("Dominant_type"),
-                                                                             random_effect_terms = c(),
-                                                                             smooth_terms = c(),
-                                                                             select = TRUE)
-}
-# TODO - consider multiple/interactions??
 
-
-#### DEFINE 2 - Fuel availability #### 
-# TODO add long term Mean_annual_FAPAR, Mean_annual_FAPA, Tree_cover
-all_alt_fuel_availability_predictors <- c("FAPAR12", "GPP12", "AGB_natural", "AGB_gridcell") 
-for(alt_predictor in all_alt_fuel_availability_predictors) {
-  
-  model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                             version_id = paste0("v3.2_fuel_availability_", alt_predictor),
-                                                                             target = "BurntFraction",
-                                                                             family = quasibinomial(link=logit),
-                                                                             linear_terms = c(alt_predictor, "FAPAR", "FWI", "PopDens", "HDI"),
-                                                                             quadratic_terms = c(),
-                                                                             interaction_terms = c(),  # Form "Var*Var2"
-                                                                             fixed_effect_terms = c("Dominant_type"),
-                                                                             random_effect_terms = c(),
-                                                                             smooth_terms = c(),
-                                                                             select = TRUE)
-}
-
-#### DEFINE 3 - Fuel curing ####
-# TODO indices relative to the max?
-all_alt_fuel_curing_predictors <- c("GPP") 
-for(alt_predictor in all_alt_fuel_curing_predictors) {
-  
-  model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                             version_id = paste0("v3.3_fuel_curing_", alt_predictor),
-                                                                             target = "BurntFraction",
-                                                                             family = quasibinomial(link=logit),
-                                                                             linear_terms = c("Mean_annual_GPP", alt_predictor, "FWI", "PopDens", "HDI"),
-                                                                             quadratic_terms = c(),
-                                                                             interaction_terms = c(),  # Form "Var*Var2"
-                                                                             fixed_effect_terms = c("Dominant_type"),
-                                                                             random_effect_terms = c(),
-                                                                             smooth_terms = c(),
-                                                                             select = TRUE)
-}
-
-#### DEFINE 4 - Human Effects ####
-
-# swap urban for population density
 model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = paste0("v3.4_human_Urban"),
+                                                                           version_id = paste0(fit_batch_version, ".Candidate12"),
                                                                            target = "BurntFraction",
                                                                            family = quasibinomial(link=logit),
-                                                                           linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "Urban", "HDI"),
-                                                                           quadratic_terms = c(),
-                                                                           interaction_terms = c(),  # Form "Var*Var2"
+                                                                           linear_terms = c("PopDens", "HDI", "Slope", "TPI"),
+                                                                           quadratic_terms = c("Treecover_Gridcell"),
+                                                                           interaction_terms = c("GPP_index*FWI", "FAPAR12*Mean_annual_GPP"),  # Form "Var*Var2"
                                                                            fixed_effect_terms = c("Dominant_type"),
                                                                            random_effect_terms = c(),
                                                                            smooth_terms = c(),
                                                                            select = TRUE)
-# no human effects
+
 model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = paste0("v3.4_human_None"),
+                                                                           version_id = paste0(fit_batch_version, ".Candidate13"),
                                                                            target = "BurntFraction",
                                                                            family = quasibinomial(link=logit),
-                                                                           linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI"),
-                                                                           quadratic_terms = c(),
-                                                                           interaction_terms = c(),  # Form "Var*Var2"
+                                                                           linear_terms = c("Slope", "TPI"),
+                                                                           quadratic_terms = c("Treecover_Gridcell"),
+                                                                           interaction_terms = c("GPP_index*FWI", "FAPAR12*Mean_annual_GPP", "PopDens*HDI"),  # Form "Var*Var2"
                                                                            fixed_effect_terms = c("Dominant_type"),
                                                                            random_effect_terms = c(),
                                                                            smooth_terms = c(),
                                                                            select = TRUE)
-# interactions
+
 model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = paste0("v3.4_human_PopDensxHDI"),
+                                                                           version_id = paste0(fit_batch_version, ".Candidate14"),
                                                                            target = "BurntFraction",
                                                                            family = quasibinomial(link=logit),
-                                                                           linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI"),
-                                                                           quadratic_terms = c(),
-                                                                           interaction_terms = c( "PopDens*HDI"),  # Form "Var*Var2"
+                                                                           linear_terms = c("PopDens", "HDI"),
+                                                                           quadratic_terms = c("Treecover_Gridcell"),
+                                                                           interaction_terms = c("GPP_index*FWI", "FAPAR12*Mean_annual_GPP", "Slope*TPI"),  # Form "Var*Var2"
                                                                            fixed_effect_terms = c("Dominant_type"),
                                                                            random_effect_terms = c(),
                                                                            smooth_terms = c(),
                                                                            select = TRUE)
+
 model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = paste0("v3.4_human_UrbanxHDI"),
+                                                                           version_id = paste0(fit_batch_version, ".Candidate14"),
                                                                            target = "BurntFraction",
                                                                            family = quasibinomial(link=logit),
-                                                                           linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI"),
-                                                                           quadratic_terms = c(),
-                                                                           interaction_terms = c( "Urban*HDI"),  # Form "Var*Var2"
+                                                                           linear_terms = c(),
+                                                                           quadratic_terms = c("Treecover_Gridcell"),
+                                                                           interaction_terms = c("GPP_index*FWI", "FAPAR12*Mean_annual_GPP", "Slope*TPI", "PopDens*HDI"),  # Form "Var*Var2"
                                                                            fixed_effect_terms = c("Dominant_type"),
                                                                            random_effect_terms = c(),
                                                                            smooth_terms = c(),
@@ -217,134 +583,13 @@ model_specifications_list[[length(model_specifications_list) + 1]] <- list(landc
 
 
 
-#### DEFINE 5 - Differing tree species flammability ####
+#### DEFINE DIRECTORIES
 
-# remove tree types
-model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = "v3.5_tree_flammability_none",
-                                                                           target = "BurntFraction",
-                                                                           family = quasibinomial(link=logit),
-                                                                           linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI"),
-                                                                           quadratic_terms = c(),
-                                                                           interaction_terms = c(),  # Form "Var*Var2"
-                                                                           fixed_effect_terms = c(),
-                                                                           random_effect_terms = c(),
-                                                                           smooth_terms = c(),
-                                                                           select = TRUE)
-# use species types
-model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = "v3.5_tree_flammability_Dominant_species",
-                                                                           target = "BurntFraction",
-                                                                           family = quasibinomial(link=logit),
-                                                                           linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI"),
-                                                                           quadratic_terms = c(),
-                                                                           interaction_terms = c(),  # Form "Var*Var2"
-                                                                           fixed_effect_terms = c("Dominant_species"),
-                                                                           random_effect_terms = c(),
-                                                                           smooth_terms = c(),
-                                                                           select = TRUE)
-
-#### DEFINE 6 - Landscape continuity ####
-model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = "v3.6_continuity_Natural",
-                                                                           target = "BurntFraction",
-                                                                           family = quasibinomial(link=logit),
-                                                                           linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI", "Natural"),
-                                                                           quadratic_terms = c(),
-                                                                           interaction_terms = c(),  # Form "Var*Var2"
-                                                                           fixed_effect_terms = c("Dominant_type"),
-                                                                           random_effect_terms = c(),
-                                                                           smooth_terms = c(),
-                                                                           select = TRUE)
-
-#### DEFINE 7 - Topography ####
-
-# Slope, TPI and interaction
-model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = "v3.7_topography_Slope",
-                                                                           target = "BurntFraction",
-                                                                           family = quasibinomial(link=logit),
-                                                                           linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI", "Slope"),
-                                                                           quadratic_terms = c(),
-                                                                           interaction_terms = c(),  # Form "Var*Var2"
-                                                                           fixed_effect_terms = c("Dominant_type"),
-                                                                           random_effect_terms = c(),
-                                                                           smooth_terms = c(),
-                                                                           select = TRUE)
-model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = "v3.7_topography_TPI",
-                                                                           target = "BurntFraction",
-                                                                           family = quasibinomial(link=logit),
-                                                                           linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI", "TPI"),
-                                                                           quadratic_terms = c(),
-                                                                           interaction_terms = c(),  # Form "Var*Var2"
-                                                                           fixed_effect_terms = c("Dominant_type"),
-                                                                           random_effect_terms = c(),
-                                                                           smooth_terms = c(),
-                                                                           select = TRUE)
-model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = "v3.7_topography_SlopexTPI",
-                                                                           target = "BurntFraction",
-                                                                           family = quasibinomial(link=logit),
-                                                                           linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI"),
-                                                                           quadratic_terms = c(),
-                                                                           interaction_terms = c("Slope*TPI"),  # Form "Var*Var2"
-                                                                           fixed_effect_terms = c("Dominant_type"),
-                                                                           random_effect_terms = c(),
-                                                                           smooth_terms = c(),
-                                                                           select = TRUE)                                                    
-
-
-
-#### DEFINE 8 - Wind enhancement of RoS ####
-# simply also include wind speed
-model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = "v3.8_WindSpeed",
-                                                                           target = "BurntFraction",
-                                                                           family = quasibinomial(link=logit),
-                                                                           linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI", "WindSpeed"),
-                                                                           quadratic_terms = c(),
-                                                                           interaction_terms = c(),  # Form "Var*Var2"
-                                                                           fixed_effect_terms = c("Dominant_type"),
-                                                                           random_effect_terms = c(),
-                                                                           smooth_terms = c(),
-                                                                           select = TRUE)
-
-
-#### DEFINE 9 - Spotting ####
-# TODO add tree cover
-all_alt_woody_predictors <- c("AGB_natural", "AGB_gridcell") 
-for(alt_predictor in all_alt_woody_predictors) {
-  
-  model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                             version_id = paste0("v3.9_spotting_Windspeedx", alt_predictor),
-                                                                             target = "BurntFraction",
-                                                                             family = quasibinomial(link=logit),
-                                                                             linear_terms = c("FAPAR", "FWI", "PopDens", "HDI"),
-                                                                             quadratic_terms = c(),
-                                                                             interaction_terms = c(paste0(alt_predictor,"*WindSpeed")),  # Form "Var*Var2"
-                                                                             fixed_effect_terms = c("Dominant_type"),
-                                                                             random_effect_terms = c(),
-                                                                             smooth_terms = c(),
-                                                                             select = TRUE)
-}
-
-#### DEFINE 10 - Land abandonment ####
-all_land_abandonment_predictors <- c("deltaNatural10", "deltaNatural20", "deltaNatural30", "deltaNatural40") 
-for(alt_predictor in all_land_abandonment_predictors) {
-  
-  model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                             version_id = paste0("v3.10_land_abandonment_", alt_predictor),
-                                                                             target = "BurntFraction",
-                                                                             family = quasibinomial(link=logit),
-                                                                             linear_terms = c("Mean_annual_GPP", "FAPAR", "FWI", "PopDens", "HDI", alt_predictor),
-                                                                             quadratic_terms = c(),
-                                                                             interaction_terms = c(),  # Form "Var*Var2"
-                                                                             fixed_effect_terms = c("Dominant_type"),
-                                                                             random_effect_terms = c(),
-                                                                             smooth_terms = c(),
-                                                                             select = TRUE)
-}
+# define paths for output (results and intermediate data)
+top.results.dir <- here("results", "GLMs", paste(dependent_var, fit_batch_version, sep = "_"))
+dir.create(top.results.dir, showWarnings = FALSE, recursive = TRUE)
+top.intermediates.dir <- here("intermediates", "GLMs", paste(dependent_var, fit_batch_version, sep = "_"))
+dir.create(top.intermediates.dir, showWarnings = FALSE, recursive = TRUE)
 
 
 not_predictors <- c("Lon", "Lat", "Year", "Month", "BurntFraction", "LandcoverFraction", "N_patches_firecci_CUTOFF12", "N_patches_firecci_CUTOFF6",  "N_patches_MODIS_CUTOFF12",   "N_patches_MODIS_CUTOFF6", "GDP_gridcell", "FuelClass")
@@ -434,9 +679,10 @@ summary_table_name_try <- file.path(top.results.dir, paste0(summary_table_name, 
 iter <- 1
 while(file.exists(summary_table_name_try)) {
   iter <- iter + 1
-  summary_table_name_try <- file.path(top.results.dir, paste0(summary_table_name,".v", iter,".txt"))
+  summary_table_name_try <- file.path(top.results.dir, paste0(summary_table_name,".r", iter,".txt"))
 }
-summary_textfile <- file(summary_table_name_try, open = "wt")
+summary_table_name_final <- summary_table_name_try
+summary_metrics_table <- data.table()
 
 
 #### READ DATA.TABLE AND PREPARE ####
@@ -445,10 +691,33 @@ master_dt <- readRDS(file.path(data_dir, paste0("master_full_dt_", data_version,
 # some data prep
 master_dt[ , PopDens := sqrt(PopDens)]
 master_dt[ , GDP_capita := sqrt(GDP_capita)]
-master_dt[ , GPP_index := (GPP3/3)/Max_GPP12]
-master_dt[ , capGPP12 := cap_at_1000(GPP12)]
-master_dt[ , log_GPP12 := log(capGPP12 + 1)]
-master_dt[ , AGB_natural := log(AGB_natural + 1)]
+
+
+
+# get a list of all predictors and do transforms as necessary
+all_predictors <- c()
+for(model_spec in model_specifications_list) {
+  all_predictors <- c(all_predictors, 
+                      model_spec$linear_terms, 
+                      model_spec$quadratic_terms,
+                      model_spec$fixed_effect_terms)
+  if(!is.null(model_spec$interaction_terms)) all_predictors <- c(all_predictors, unlist(strsplit(model_spec$interaction_terms, split = "*", fixed = TRUE)))
+}
+all_predictors <- unique(all_predictors)
+
+# derisome indicees
+if("GPP_index" %in% all_predictors) master_dt[ , GPP_index := GPP/Max_GPP12]
+if("FAPAR_index" %in% all_predictors) master_dt[ , FAPAR_index := FAPAR/Max_FAPAR12]
+
+# do transforms (log)
+for(this_predictor in all_predictors){
+  
+  if(substr(this_predictor, 1, 4) == "log_") {
+    print(substr(this_predictor, 5, nchar(this_predictor)))
+    master_dt[ , (this_predictor):= log(get(substr(this_predictor, 5, nchar(this_predictor))) + 1)]
+  }
+  
+}
 
 
 #### MAIN LOOP FOR EACH MODEL ####
@@ -461,22 +730,23 @@ for(model_spec in model_specifications_list) {
   summary_metrics <- list()
   
   # read the model specifications for later convenience
-  dependent_var <-  model_spec$target
+  #dependent_var <-  model_spec$target
   version_id <- model_spec$version_id
-  landcover <- model_spec$landcover
+  #landcover <- model_spec$landcover
   linear_terms <- model_spec$linear_terms
   quadratic_terms <- model_spec$quadratic_terms
   interaction_terms <- model_spec$interaction_terms
   fixed_effect_terms <- model_spec$fixed_effect_terms
   random_effect_terms <- model_spec$random_effect_terms
   smooth_terms <- model_spec$smooth_terms
-  this_dependent_var <- paste(dependent_var, landcover, sep = "_")
   
   
-  # analysis directories and text info
-  plot.dir <- file.path(top.results.dir, this_dependent_var, version_id)
+  # analysis and plot directories and text info
+  plot.dir <- file.path(top.results.dir, version_id)
   dir.create(plot.dir, showWarnings = FALSE, recursive = TRUE)
-  intermediates.dir <- file.path(top.intermediates.dir, this_dependent_var, version_id)
+  dir.create(file.path(plot.dir, "GLM"), showWarnings = FALSE, recursive = TRUE)
+  dir.create(file.path(plot.dir, "Scaled"), showWarnings = FALSE, recursive = TRUE)
+  intermediates.dir <- file.path(top.intermediates.dir, version_id)
   dir.create(intermediates.dir, showWarnings = FALSE, recursive = TRUE)
   this_model_textfile <- file(file.path(plot.dir, "log.txt"), open = "wt")
   writeLines(paste("Input data version:", data_version), this_model_textfile)
@@ -492,7 +762,7 @@ for(model_spec in model_specifications_list) {
   
   
   # build the formula  
-  this_formula_str <- paste(this_dependent_var, "~")
+  this_formula_str <- paste(dependent_var, "~")
   if(length(linear_terms) > 0) this_formula_str <- paste(this_formula_str, paste(linear_terms, collapse =  " + "))
   if(length(quadratic_terms) > 0) this_formula_str <- paste(this_formula_str, paste(paste0("poly(", quadratic_terms, ",2)"), collapse =  " + "), sep = " + ")
   if(length(interaction_terms) > 0) this_formula_str <- paste(this_formula_str, paste(interaction_terms, collapse =  " + "), sep = " + ")
@@ -525,10 +795,10 @@ for(model_spec in model_specifications_list) {
     # make and save correlation plot
     all_cor <- cor(na.omit(master_dt[ , ..continuous_predictor_vars]), method = "pearson")
     pearsons_corrplot <- ggcorrplot(all_cor, hc.order = TRUE, type = "lower",
-               outline.col = "white",
-               ggtheme = ggplot2::theme_gray,
-               colors = c("#6D9EC1", "white", "#E46726"),
-               lab = TRUE)
+                                    outline.col = "white",
+                                    ggtheme = ggplot2::theme_gray,
+                                    colors = c("#6D9EC1", "white", "#E46726"),
+                                    lab = TRUE)
     magicPlot(p = pearsons_corrplot, filename = file.path(plot.dir, paste("PearsonsCorrelation", sep = "_")), height = 800, width =800)
     #print(pearsons_corrplot)
     
@@ -538,9 +808,9 @@ for(model_spec in model_specifications_list) {
     
     # select the columns we need for this particular model
     if("Year" %in% names(master_dt))  { 
-      col_subset <- c("Lon", "Lat", "Year","Month",  this_dependent_var, paste("LandcoverFraction", landcover, sep = "_"), "FuelClass", predictor_vars)
+      col_subset <- c("Lon", "Lat", "Year","Month",  dependent_var, paste("LandcoverFraction", landcover, sep = "_"), "FuelClass", predictor_vars)
     } else {
-      col_subset <- c("Lon", "Lat", "Month",  this_dependent_var, paste("LandcoverFraction", landcover, sep = "_"), "FuelClass", predictor_vars)
+      col_subset <- c("Lon", "Lat", "Month",  dependent_var, paste("LandcoverFraction", landcover, sep = "_"), "FuelClass", predictor_vars)
     }
     
     # select columns (variables) and rows (only the fitting years) and require at least 0.1% of the area covered by the landcover type
@@ -552,7 +822,7 @@ for(model_spec in model_specifications_list) {
     if("GDP_capita" %in% predictor_vars)  fitting_dt <- fitting_dt[GDP_capita < sqrt(200000),]
     if("Urban" %in% predictor_vars) fitting_dt <- fitting_dt[Urban < 0.5,] 
     # limit the predictor to 1.0 in case of very rare numerical artefacts
-    if(dependent_var == "BurntFraction") fitting_dt <- fitting_dt[ , c(this_dependent_var) := cap_at_1(.SD), .SDcols = this_dependent_var] 
+    if(target == "BurntFraction") fitting_dt <- fitting_dt[ , c(dependent_var) := cap_at_1(.SD), .SDcols = dependent_var] 
     # if Natural
     if(landcover == "Natural") fitting_dt <- fitting_dt[ LandcoverFraction_Natural > 0.15, ] 
     
@@ -571,8 +841,8 @@ for(model_spec in model_specifications_list) {
       fitting_dt_annual[ , Lat1 := floor(Lat)]
       set.seed(1234)
       
-      burnt_dt <- fitting_dt_annual[ get(this_dependent_var) > 0, .(burnt = .N), by = c("Lon1", "Lat1")]
-      unburnt_dt <- fitting_dt_annual[ get(this_dependent_var) == 0, .(unburnt = .N), by = c("Lon1", "Lat1")]
+      burnt_dt <- fitting_dt_annual[ get(dependent_var) > 0, .(burnt = .N), by = c("Lon1", "Lat1")]
+      unburnt_dt <- fitting_dt_annual[ get(dependent_var) == 0, .(unburnt = .N), by = c("Lon1", "Lat1")]
       
       totals_dt <- merge(burnt_dt, unburnt_dt, all = TRUE)
       totals_dt$burnt[is.na( totals_dt$burnt)] <- 0
@@ -599,10 +869,10 @@ for(model_spec in model_specifications_list) {
         }
         else {
           # take all burnt
-          this_burnt_dt <- this_dt[ get(this_dependent_var) > 0, c("Lon", "Lat")]
+          this_burnt_dt <- this_dt[ get(dependent_var) > 0, c("Lon", "Lat")]
           selected_gridcells <- rbind(selected_gridcells, this_burnt_dt)
           # take a matching amount of unburnt as burnt, with a minimum of 15% gridcells (or failing that a single gricell)
-          this_unburnt_dt <- this_dt[ get(this_dependent_var) == 0, c("Lon", "Lat")]
+          this_unburnt_dt <- this_dt[ get(dependent_var) == 0, c("Lon", "Lat")]
           num_unburnt_sample <- max(nrow(this_burnt_dt), ceiling(0.15 * nrow(this_dt)))
           this_unburnt_dt <- this_unburnt_dt[ , c("Lon", "Lat")][sample(x = 1:nrow(this_unburnt_dt), size = num_unburnt_sample, replace = FALSE),]
           selected_gridcells <- rbind(selected_gridcells, this_unburnt_dt)
@@ -614,6 +884,8 @@ for(model_spec in model_specifications_list) {
       #fitting_dt <- fitting_dt[selected_gridcells]
     }
     
+    
+    #### START FIT ####
     if(do_fit) {
       message(" ** Starting fit with formula:")
       print(this_formula_str)
@@ -636,32 +908,83 @@ for(model_spec in model_specifications_list) {
       summary_metrics[["Deviance explained"]] <- round(this_deviance_explained, 3)
       print(paste0(" ** Finished fit.  Deviance explained = ", signif(this_deviance_explained, 3) *100, "%"))
       
-      # do the prediction before saving
-      ### now predict 
+      
+      ####  CALCULATE PREDICTED VALUES #### 
       print(" ** Making full prediction")
       # note the requirement add that the prediction is only done in gridcells where there is at least 1% of the landcover type present
       predicted_dt <- copy(valid_subset_dt)[ , "Predicted_burnt_fraction" := predict(object = this_m, newdata = valid_subset_dt, type = "response")]
-      setnames(predicted_dt, this_dependent_var, "Observed_burnt_fraction")
+      setnames(predicted_dt, dependent_var, "Observed_burnt_fraction")
       print(" ** Done.")
       # calculate burnt area from burnt fraction, landcover fraction and gridcell area
       print(" ** Calculating gridecell area")
       predicted_dt <- addArea(predicted_dt, "ha", tolerance = 0.0000001)
       predicted_dt[, Landcover_area_ha :=  get(paste("LandcoverFraction", landcover, sep = "_")) * Area]
-      predicted_dt[, Predicted_burnt_area_glm := Predicted_burnt_fraction * Landcover_area_ha]
+      predicted_dt[, Predicted_burnt_area_raw := Predicted_burnt_fraction * Landcover_area_ha]
       predicted_dt[, Observed_burnt_area := Observed_burnt_fraction * Landcover_area_ha]
       predicted_dt[, Predicted_burnt_fraction := Predicted_burnt_fraction * 100]
       predicted_dt[, Observed_burnt_fraction := Observed_burnt_fraction * 100]
+      print(" ** Done.")
       
-      # save just the observed and predicted
-      subset_to_save <- predicted_dt[ , c("Lon", "Lat", "Year", "Month", "Predicted_burnt_area_glm", "Observed_burnt_area", "Predicted_burnt_fraction", "Observed_burnt_fraction")]
-      setnames(subset_to_save, "Predicted_burnt_area_glm", "Predicted_burnt_area")
+      
+      #### APPLY THRESHOLD ####
+      
+      ### Remove small monthly burnt areas from the prediction    
+      unscaled_NME <- calcNME(obs = predicted_dt[["Observed_burnt_area"]], mod = predicted_dt[["Predicted_burnt_area_raw"]])
+      summary_metrics[["Raw full NME"]] <- round(unscaled_NME, 3)
+      print(unscaled_NME)
+      predicted_dt[, Predicted_burnt_area_threshold := fifelse(Predicted_burnt_area_raw > min_fire_size_ha, Predicted_burnt_area_raw, 0)]
+      threshold_NME <- calcNME(obs = predicted_dt[["Observed_burnt_area"]], mod = predicted_dt[["Predicted_burnt_area_threshold"]])
+      print(threshold_NME)
+      
+      #### APPLY SCALING ####
+      if(apply_scaling) {
+        
+        print(" ** Applying scaling")
+        tic()
+        # apply an exponent and then scale the burnt area
+        observed_total_ba <- sum(predicted_dt[["Observed_burnt_area"]])
+        min_NME <- 100
+        best_exp <- best_scaling <- NULL
+        for(this_exponent in seq(0.1, 5, 0.1)) {
+          
+          this_exp_predictions <- predicted_dt$Predicted_burnt_area_threshold^this_exponent
+          this_scaling <- observed_total_ba / sum(this_exp_predictions)
+          this_final <- this_exp_predictions *  this_scaling
+          this_NME <-  calcNME(obs = predicted_dt[["Observed_burnt_area"]], mod = this_final)
+          
+          if(this_NME < min_NME) {
+            min_NME <- this_NME
+            best_exp <- this_exponent
+            best_scaling <- this_scaling
+          }
+          
+        }
+        print(" ** Done.")
+        toc()
+        print(paste("Final NME:", min_NME))
+        print(paste("Scaling Factor:", best_scaling))
+        print(paste("Exponent:", best_exp))
+        
+        
+        summary_metrics[["Scaled full NME"]] <- round(min_NME, 3)
+        summary_metrics[["Scaling Factor"]] <- round(best_scaling, 3)
+        summary_metrics[["Exponent"]] <- round(best_exp, 3)
+        
+        # select the fial predicted burnt area
+        predicted_dt[, Predicted_burnt_area_scaled := best_scaling * Predicted_burnt_area_threshold^best_exp]
+        subset_to_save <- predicted_dt[ , c("Lon", "Lat", "Year", "Month", "Predicted_burnt_area_raw", "Predicted_burnt_area_scaled", "Observed_burnt_area", "Predicted_burnt_fraction", "Observed_burnt_fraction")]
+        
+      } else {
+        subset_to_save <- predicted_dt[ , c("Lon", "Lat", "Year", "Month", "Predicted_burnt_area_raw", "Observed_burnt_area", "Predicted_burnt_fraction", "Observed_burnt_fraction")]
+      }
       
       
       # save the GLM and the data to the intermediates directory
-      print(" ** Saving model and data.frame")
+      print(" ** Saving model")
       tic()
       saveRDS(object = this_m, file = file.path(intermediates.dir, paste("GLM", version_id, "rds", sep = ".")))
       toc()
+      print(" ** Saving results data.frame")
       tic()
       saveRDS(object = predicted_dt, file = file.path(intermediates.dir, paste("DT", version_id, "rds", sep = ".")))
       toc()
@@ -690,7 +1013,7 @@ for(model_spec in model_specifications_list) {
     
     # # subtitle of variance explained and number of data points
     subtitle_text <- paste0("Dev. expl. = ",  round(this_deviance_explained * 100, 1), "%")
-    caption_text <- paste(this_dependent_var, version_id, paste0("Dev. expl. = ",  round(this_deviance_explained * 100, 1), "%"), sep = ", ")
+    caption_text <- paste(dependent_var, version_id, paste0("Dev. expl. = ",  round(this_deviance_explained * 100, 1), "%"), sep = ", ")
     
     
     # Variable Importance through Permutation (VIP)
@@ -705,10 +1028,15 @@ for(model_spec in model_specifications_list) {
     all_ggplot_list <- list()
     
     # generate a template data frame for prediction
+    print("  ***** Calculating fixed predictor values.")
+    tic()
     template_dt <- calculatePredictionDT(dt = master_dt, model = this_m, method = mean, npoints = 100) 
+    toc()
     
     # PLOT SINGLE TERMS
     for(this_var in c(linear_terms, quadratic_terms, smooth_terms)){
+      print(paste0("   **** Plotting simple predictor:", this_var))
+      
       all_ggplot_list[[this_var]] <- plotSimpleTerm (this_var, this_m, template_dt, range(master_dt[[this_var]], na.rm = TRUE))
       effect_plot <- all_ggplot_list[[this_var]] + theme(text = element_text(size = theme_get()$text$size * text.multiplier))#,
       effect_plot <- effect_plot + labs(caption = caption_text, y = paste("Burnt Fracttion [-] (other covariates fixed at mean)"))
@@ -720,6 +1048,8 @@ for(model_spec in model_specifications_list) {
     
     # PLOT INTERACTION TERMS
     for(this_interaction in interaction_terms){
+      
+      print(paste0("   **** Plotting interation:", this_interaction))
       
       # determine the variables
       these_vars <-  unlist(strsplit(x =this_interaction, split = "*", fixed = TRUE))
@@ -747,59 +1077,7 @@ for(model_spec in model_specifications_list) {
     
     
     
-    ########################### PREDICTIONS IN TIME AND SPACE ##############################
-    
-    ### Remove small monthly burnt areas from the prediction    
-    unscaled_NME <- calcNME(obs = predicted_dt[["Observed_burnt_area"]], mod = predicted_dt[["Predicted_burnt_area_glm"]])
-    summary_metrics[["Raw full NME"]] <- round(unscaled_NME, 3)
-    print(unscaled_NME)
-    predicted_dt[, Predicted_burnt_area_threshold := fifelse(Predicted_burnt_area_glm > min_fire_size_ha, Predicted_burnt_area_glm, 0)]
-    threshold_NME <- calcNME(obs = predicted_dt[["Observed_burnt_area"]], mod = predicted_dt[["Predicted_burnt_area_threshold"]])
-    print(threshold_NME)
-    
-    # ### Scale the 
-    if(apply_scaling) {
-      
-      # apply an exponent and then scale the burnt area
-      observed_total_ba <- sum(predicted_dt[["Observed_burnt_area"]])
-      min_NME <- 100
-      best_exp <- NULL
-      best_scaling <- NULL
-      for(this_exponent in seq(0.1, 5, 0.1)) {
-        
-        tic()
-        this_exp_predictions <- predicted_dt$Predicted_burnt_area_threshold^this_exponent
-        this_scaling <- observed_total_ba / sum(this_exp_predictions)
-        toc()
-        
-        
-        this_final <- this_exp_predictions *  this_scaling
-        print(sum(this_final))
-        
-        this_NME <-  calcNME(obs = predicted_dt[["Observed_burnt_area"]], mod = this_final)
-        
-        if(this_NME < min_NME) {
-          min_NME <- this_NME
-          best_exp <- this_exponent
-          best_scaling <- this_scaling
-        }
-        print(min_NME)
-        print(best_exp)
-        print(best_scaling)
-      }
-      
-      # predicted_dt[, Predicted_burnt_area_final := a * Predicted_burnt_area ^ b]
-      # linear_scaled_NME <- calcNME(obs = predicted_dt[["Observed_burnt_area"]], mod = predicted_dt[["Predicted_burnt_area_final"]])
-      # print(linear_scaled_NME)
-      # 
-      
-      # select the fial predicted burnt area
-      predicted_dt[, Predicted_burnt_area := best_scaling * Predicted_burnt_area_threshold^best_exp]
-      
-    } else {
-      predicted_dt[, Predicted_burnt_area := Predicted_burnt_area_threshold]
-    }
-    
+    ############ PREDICTIONS IN TIME AND SPACE ################
     
     #### SPATIAL PREDICTIONS ####
     
@@ -809,126 +1087,126 @@ for(model_spec in model_specifications_list) {
     plot_region <- c(xmin = min(all_lons), xmax = max(all_lons), ymin = min(all_lats), ymax = max(all_lats))
     this_overlay <- st_crop(overlay, plot_region)
     
-    
-    # monthly
-    print(" ** Plotting monthly predictions")
-    
-    # if necessary average across years
-    if("Year" %in% names(predicted_dt)){
-      predicted_dt_meanyear <- predicted_dt[, lapply(.SD, FUN=mean, na.rm = TRUE), by = c("Lon","Lat", "Month"), .SDcols = c("Predicted_burnt_fraction", "Observed_burnt_fraction", "Predicted_burnt_area", "Observed_burnt_area")]
-    } else {
-      predicted_dt_meanyear <- copy(predicted_dt)
-    }
-    
-    # make monthly plots
-    for(this_month in unique(predicted_dt_meanyear[["Month"]])) {
+    for(scaled_or_unscaled in c("GLM", "Scaled")) {
       
-      this_prediction <- predicted_dt_meanyear[Month == this_month, ]
-      this_prediction[, Month := NULL]
-      
-      setnames(this_prediction,  gsub(pattern = "_", replacement = " ", names(this_prediction), ))
-      this_prediction <- melt(this_prediction, id.vars = c("Lon", "Lat"))
-      
-      
-      for(this_var in fraction_or_area) {
+      if(scaled_or_unscaled == "GLM" | (scaled_or_unscaled == "Scaled" & apply_scaling)) {
         
-        this_prediction_fraction_or_area <- this_prediction[ variable %in% this_var$pretty_columns,]
-        this_prediction_fraction_or_area[ , value := cut(value, this_var$cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE)]
+        # set either scaled or not
+        if(scaled_or_unscaled == "GLM") predicted_dt[ , Predicted_burnt_area := Predicted_burnt_area_raw]    
+        else predicted_dt[ , Predicted_burnt_area := Predicted_burnt_area_scaled]    
         
+        # monthly
+        print(" ** Plotting monthly predictions")
         
-        this_prediction_plot <- ggplot(this_prediction_fraction_or_area[ variable %in% this_var$pretty_columns,]) +  geom_raster(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "H", name = this_var$title, discrete = TRUE) + facet_wrap(~variable)
-        this_prediction_plot <- this_prediction_plot + labs(title = paste("Burnt", this_var$name, "in", landcover,":",  month_labels[this_month]),
-                                                            caption = caption_text)
-        this_prediction_plot <- this_prediction_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
-        suppressWarnings({
+        # average across years
+        predicted_dt_meanyear <- predicted_dt[, lapply(.SD, FUN=mean, na.rm = TRUE), by = c("Lon","Lat", "Month"), .SDcols = c("Predicted_burnt_fraction", "Observed_burnt_fraction", "Predicted_burnt_area", "Observed_burnt_area")]
+        
+        # make monthly plots
+        for(this_month in unique(predicted_dt_meanyear[["Month"]])) {
+          
+          this_prediction <- predicted_dt_meanyear[Month == this_month, ]
+          this_prediction[, Month := NULL]
+          
+          setnames(this_prediction,  gsub(pattern = "_", replacement = " ", names(this_prediction), ))
+          this_prediction <- melt(this_prediction, id.vars = c("Lon", "Lat"))
+          
+          for(this_var in fraction_or_area) {
+            
+            this_prediction_fraction_or_area <- this_prediction[ variable %in% this_var$pretty_columns,]
+            this_prediction_fraction_or_area[ , value := cut(value, this_var$cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE)]
+            
+            
+            this_prediction_plot <- ggplot(this_prediction_fraction_or_area[ variable %in% this_var$pretty_columns,]) +  geom_raster(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "H", name = this_var$title, discrete = TRUE) + facet_wrap(~variable)
+            this_prediction_plot <- this_prediction_plot + labs(title = paste("Burnt", this_var$name, "in", landcover,":",  month_labels[this_month]),
+                                                                caption = caption_text)
+            this_prediction_plot <- this_prediction_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
+            suppressWarnings({
+              this_prediction_plot <- this_prediction_plot + coord_cartesian() + geom_sf(data=this_overlay, 
+                                                                                         fill = "transparent", 
+                                                                                         linewidth = 0.1,
+                                                                                         colour= "black")
+              magicPlot(p = this_prediction_plot, filename = file.path(plot.dir, scaled_or_unscaled, paste("MonthlyPrediction",  paste0("Burnt", this_var$name),  paste(this_month, month_labels[this_month], sep = "-"), sep = "_")), height = 900, width =1300)
+            })
+          }
+        }
+        
+        # annual
+        print(" ** Plotting annual predictions")
+        
+        this_prediction <- predicted_dt_meanyear[ , lapply(.SD, FUN=sum, na.rm = TRUE), by = c("Lon", "Lat")] 
+        this_prediction[, Month := NULL]
+        
+        setnames(this_prediction,  gsub(pattern = "_", replacement = " ", names(this_prediction), ))
+        this_prediction <- melt(this_prediction, id.vars = c("Lon", "Lat"))
+        
+        spatial_NME <- calcNME(this_prediction[variable == "Observed burnt area", value], this_prediction[variable == "Predicted burnt area", value])
+        summary_metrics[[paste(scaled_or_unscaled, "Spatial NME")]] <- round(spatial_NME, 3)
+        print(paste("Final spatial burnt area NME =",  round(spatial_NME, 3)))
+        
+        for(this_var in fraction_or_area) {
+          
+          this_prediction_fraction_or_area <- this_prediction[ variable %in% this_var$pretty_columns,]
+          this_prediction_fraction_or_area[ , value := cut(value, this_var$cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE)]
+          
+          
+          this_prediction_plot <- ggplot(this_prediction_fraction_or_area[ variable %in% gsub("_", " ", this_var$pretty_columns, fixed = TRUE),]) +  geom_raster(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "H", name = this_var$title, discrete = TRUE) + facet_wrap(~variable)
+          this_prediction_plot <- this_prediction_plot + labs(title = paste("Burnt", this_var$name, "in", landcover,": Annual"),
+                                                              caption = caption_text)
+          this_prediction_plot <- this_prediction_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
           this_prediction_plot <- this_prediction_plot + coord_cartesian() + geom_sf(data=this_overlay, 
                                                                                      fill = "transparent", 
                                                                                      linewidth = 0.1,
                                                                                      colour= "black")
-          magicPlot(p = this_prediction_plot, filename = file.path(plot.dir, paste("MonthlyPrediction",  paste0("Burnt", this_var$name),  paste(this_month, month_labels[this_month], sep = "-"), sep = "_")), height = 900, width =1300)
-        })
-      }
+          magicPlot(p = this_prediction_plot, filename = file.path(plot.dir, scaled_or_unscaled, paste("AnnualPrediction",  paste0("Burnt", this_var$name), sep = "_")), height = 900, width =1300)
+          
+        }
+        
+        #### SUBANNUAL PREDICTIONS ####
+        print(" ** Plotting climatology prediction")
+        
+        # sum burnt areas for each year 
+        prediction_dt_subannual <- predicted_dt_meanyear[ , lapply(.SD, FUN=sum, na.rm = TRUE), by = c("Month"), .SDcols = c("Observed_burnt_area", "Predicted_burnt_area")]
+        prediction_dt_subannual <- melt(prediction_dt_subannual, id.vars = c("Month"), variable.name = "Type", value.name = "Burnt_area")
+        this_prediction_ts_plot <- ggplot(prediction_dt_subannual) +  geom_line(data = prediction_dt_subannual, aes(x = Month, y = Burnt_area, col = Type)) + ylab("Burnt area (ha)")
+        this_prediction_ts_plot <- this_prediction_ts_plot + scale_x_continuous(breaks = 1:12, labels = month_labels) + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
+        #print(this_prediction_ts_plot)
+        this_prediction_ts_plot <- this_prediction_ts_plot + labs(title = paste("Burnt Area in landcover:", landcover),
+                                                                  caption = caption_text)
+        
+        magicPlot(p = this_prediction_ts_plot, filename = file.path(plot.dir, scaled_or_unscaled, paste("SeasonalPrediction", sep = "_")), height = 1000, width =1500)
+        
+        seasonal_NME <- calcNME(prediction_dt_subannual[Type == "Observed_burnt_area", Burnt_area], prediction_dt_subannual[Type == "Predicted_burnt_area", Burnt_area])
+        summary_metrics[[paste(scaled_or_unscaled, "Seasonal NME")]] <- round(seasonal_NME, 3)
+        print(paste("Final seasonal burnt area NME =",  round(seasonal_NME, 3)))
+        
+        
+        #### ANNUAL TS (IAV) PREDICTIONS ####
+        
+        #  sum all month in the years
+        predicted_dt_yearly <- predicted_dt[ , lapply(.SD, FUN=sum, na.rm = TRUE), by = c("Lon","Lat","Year"), .SDcols = c("Observed_burnt_area", "Predicted_burnt_area")]
+        
+        # sum across all gridcells melt
+        predicted_dt_yearly <- predicted_dt_yearly[ , lapply(.SD, FUN=sum, na.rm = TRUE), by = c("Year"), .SDcols = c("Observed_burnt_area", "Predicted_burnt_area")]
+        
+        # plot
+        predicted_dt_yearly_melted <- melt(predicted_dt_yearly, id.vars = c("Year"), variable.name = "Type", value.name = "Burnt_area")
+        
+        this_prediction_yearly_plot <- ggplot(predicted_dt_yearly_melted) +  geom_line(data = predicted_dt_yearly_melted, aes(x = Year, y = Burnt_area, col = Type)) + ylab("Burnt area (ha)")
+        this_prediction_yearly_plot <- this_prediction_yearly_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
+        #print(this_prediction_ts_plot)
+        this_prediction_yearly_plot <- this_prediction_yearly_plot + labs(title = paste("Burnt Area in landcover:", landcover),
+                                                                          caption = caption_text)
+        
+        magicPlot(p = this_prediction_yearly_plot, filename = file.path(plot.dir, scaled_or_unscaled, paste("YearlyTSPrediction", sep = "_")), height = 1000, width =1500)
+        
+        iav_NME <- calcNME(predicted_dt_yearly_melted[Type == "Observed_burnt_area", Burnt_area], predicted_dt_yearly_melted[Type == "Predicted_burnt_area", Burnt_area])
+        summary_metrics[[paste(scaled_or_unscaled, "IAV NME")]] <- round(iav_NME, 3)
+        print(paste("Final IAV burnt area NME =",  round(iav_NME, 3)))
+        
+        
+      } # catch if no scaling applied
       
-    }
-    
-    # annual
-    print(" ** Plotting annual predictions")
-    
-    this_prediction <- predicted_dt_meanyear[ , lapply(.SD, FUN=sum, na.rm = TRUE), by = c("Lon", "Lat")] 
-    this_prediction[, Month := NULL]
-    
-    setnames(this_prediction,  gsub(pattern = "_", replacement = " ", names(this_prediction), ))
-    this_prediction <- melt(this_prediction, id.vars = c("Lon", "Lat"))
-    
-    spatial_NME <- calcNME(this_prediction[variable == "Observed burnt area", value], this_prediction[variable == "Predicted burnt area", value])
-    summary_metrics[["Spatial NME"]] <- round(spatial_NME, 3)
-    print(paste("Final spatial burnt area NME =",  round(spatial_NME, 3)))
-    
-    for(this_var in fraction_or_area) {
-      
-      this_prediction_fraction_or_area <- this_prediction[ variable %in% this_var$pretty_columns,]
-      this_prediction_fraction_or_area[ , value := cut(value, this_var$cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE)]
-      
-      
-      this_prediction_plot <- ggplot(this_prediction_fraction_or_area[ variable %in% gsub("_", " ", this_var$pretty_columns, fixed = TRUE),]) +  geom_raster(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "H", name = this_var$title, discrete = TRUE) + facet_wrap(~variable)
-      this_prediction_plot <- this_prediction_plot + labs(title = paste("Burnt", this_var$name, "in", landcover,": Annual"),
-                                                          caption = caption_text)
-      this_prediction_plot <- this_prediction_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
-      this_prediction_plot <- this_prediction_plot + coord_cartesian() + geom_sf(data=this_overlay, 
-                                                                                 fill = "transparent", 
-                                                                                 linewidth = 0.1,
-                                                                                 colour= "black")
-      magicPlot(p = this_prediction_plot, filename = file.path(plot.dir, paste("AnnualPrediction",  paste0("Burnt", this_var$name), sep = "_")), height = 900, width =1300)
-      
-    }
-    
-    #### SUBANNUAL PREDICTIONS ####
-    print(" ** Plotting climatology prection")
-    
-    # sum burnt areas for each year 
-    prediction_dt_subannual <- predicted_dt_meanyear[ , lapply(.SD, FUN=sum, na.rm = TRUE), by = c("Month"), .SDcols = c("Observed_burnt_area", "Predicted_burnt_area")]
-    prediction_dt_subannual <- melt(prediction_dt_subannual, id.vars = c("Month"), variable.name = "Type", value.name = "Burnt_area")
-    this_prediction_ts_plot <- ggplot(prediction_dt_subannual) +  geom_line(data = prediction_dt_subannual, aes(x = Month, y = Burnt_area, col = Type)) + ylab("Burnt area (ha)")
-    this_prediction_ts_plot <- this_prediction_ts_plot + scale_x_continuous(breaks = 1:12, labels = month_labels) + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
-    #print(this_prediction_ts_plot)
-    this_prediction_ts_plot <- this_prediction_ts_plot + labs(title = paste("Burnt Area in landcover:", landcover),
-                                                              caption = caption_text)
-    
-    magicPlot(p = this_prediction_ts_plot, filename = file.path(plot.dir, paste("SeasonalPrediction", sep = "_")), height = 1000, width =1500)
-    
-    seasonal_NME <- calcNME(prediction_dt_subannual[Type == "Observed_burnt_area", Burnt_area], prediction_dt_subannual[Type == "Predicted_burnt_area", Burnt_area])
-    summary_metrics[["Seasonal NME"]] <- round(seasonal_NME, 3)
-    print(paste("Final seasonal burnt area NME =",  round(seasonal_NME, 3)))
-    
-    
-    #### ANNUAL TS (IAV) PREDICTIONS ####
-    
-    # only try if actually got yearly values
-    if("Year" %in% names(predicted_dt)){
-      
-      #  sum all month in the years
-      predicted_dt_yearly <- predicted_dt[ , lapply(.SD, FUN=sum, na.rm = TRUE), by = c("Lon","Lat","Year"), .SDcols = c("Observed_burnt_area", "Predicted_burnt_area")]
-      
-      # sum across all gridcells melt
-      predicted_dt_yearly <- predicted_dt_yearly[ , lapply(.SD, FUN=sum, na.rm = TRUE), by = c("Year"), .SDcols = c("Observed_burnt_area", "Predicted_burnt_area")]
-      
-      # plot
-      predicted_dt_yearly_melted <- melt(predicted_dt_yearly, id.vars = c("Year"), variable.name = "Type", value.name = "Burnt_area")
-      
-      this_prediction_yearly_plot <- ggplot(predicted_dt_yearly_melted) +  geom_line(data = predicted_dt_yearly_melted, aes(x = Year, y = Burnt_area, col = Type)) + ylab("Burnt area (ha)")
-      this_prediction_yearly_plot <- this_prediction_yearly_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
-      #print(this_prediction_ts_plot)
-      this_prediction_yearly_plot <- this_prediction_yearly_plot + labs(title = paste("Burnt Area in landcover:", landcover),
-                                                                        caption = caption_text)
-      
-      magicPlot(p = this_prediction_yearly_plot, filename = file.path(plot.dir, paste("YearlyTSPrediction", sep = "_")), height = 1000, width =1500)
-      
-      iav_NME <- calcNME(predicted_dt_yearly_melted[Type == "Observed_burnt_area", Burnt_area], predicted_dt_yearly_melted[Type == "Predicted_burnt_area", Burnt_area])
-      summary_metrics[["IAV NME"]] <- round(iav_NME, 3)
-      print(paste("Final IAV burnt area NME =",  round(iav_NME, 3)))
-      
-      
-    }
+    } # for scaled and unscaled
     
     ### END PREDICTION CODE
     
@@ -938,18 +1216,18 @@ for(model_spec in model_specifications_list) {
   
   
   full_timing <- capture.output(toc())
-  writeLines(c("Total run time", full_timing) , con = this_model_textfile)
-  
+  writeLines(c("Total run time:", full_timing) , con = this_model_textfile)
   close(this_model_textfile)
+  fwrite(x = summary_metrics_table,
+         file = file.path(plot.dir, "log.txt"),
+         sep = ",",
+         col.names=T,
+         append=T)
   
+  # (over-)write the summury metric file every time (so we have some results even if run is incomplete)
+  summary_metrics_table <- rbind(summary_metrics_table, summary_metrics )
+  write.csv(x = summary_metrics_table, file = summary_table_name_final, row.names = FALSE)
   
-  print(summary_metrics)
-  if(first_model_fit) {
-    writeLines(c(names(summary_metrics), "\n") , con = summary_textfile, sep = "\t")
-    first_model_fit <- FALSE
-  }
-  writeLines(c(as.character(summary_metrics), "\n") , con = summary_textfile, sep = "\t")  
-
 } # for specified model
 
-close(summary_textfile) 
+

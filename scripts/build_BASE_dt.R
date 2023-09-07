@@ -3,7 +3,6 @@ library(sf)
 library(data.table)
 library(ncdf4)
 library(tictoc)
-library(corrplot)
 
 # define root path with here package and 
 here::i_am("scripts/build_BASE_dt.R")
@@ -19,7 +18,7 @@ base_dir <- here("external_files", "gridded_9km/")
 fwi_raw_dir <- here("external_files", "daily_fwi/")
 climate_dir <- here("external_files", "era5_climate/")
 
-version <- "7.0_fixed_FWI_full_FAPAR"
+version <- "8.0_treecover"
 
 # select which data sets to use
 doLFMC <- FALSE
@@ -27,7 +26,6 @@ doLFMC <- FALSE
 ref_grid_terra <- rast(file.path(base_dir, "FirEUrisk_ref_grid.nc"))
 ref_grid_dt <- as.data.frame(ref_grid_terra, xy = TRUE)
 setnames(ref_grid_dt, c("x", "y"), c("Lon", "Lat"))
-
 
 
 
@@ -204,7 +202,7 @@ rm(this_lu_dt, this_lu_rast)
 #### AGB
 
 agb_terra <-  c(rast(file.path(base_dir, "Biomass", "ESACCI-BIOMASS-FirEUrisk-9km-2010-GridcellMean.nc")), rast(file.path(base_dir, "Biomass", "ESACCI-BIOMASS-FirEUrisk-9km-2010-Natural_via_CCI_Landcover_300m_grid.nc")))
-names(agb_terra) <- c("AGB_gridcell", "AGB_natural")
+names(agb_terra) <- c("AGB_Gridcell", "AGB_Natural")
 
 agb_terra <- resample(agb_terra, ref_grid_terra)
 agb_dt <- as.data.table(as.data.frame(agb_terra, xy = TRUE))
@@ -218,11 +216,43 @@ agb_dt[ , Lat := round(Lat, 7)]
 master_full_dt <- merge.data.table(x = master_full_dt, y = agb_dt, by = c("Lon", "Lat"))
 
 # Report and tidy up
-message(paste0("*** Completed AGB ***"))
+message(paste0("*** Completed tree cover ***"))
 current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count = current_row_size)
 
 rm(agb_dt, agb_terra)
 
+
+#### Landsat Tree Cover ####
+
+# take the average of 2000, 2005, 2010, 2015
+tc_years <- c( 2000, 2005, 2010, 2015)
+treecover_all_lc_terra <- c(mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_all_frac.v2.0.tif"))))), 
+                      mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_natural_frac.v2.0.tif"))))), 
+                      mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_cropland_frac.v2.0.tif"))))), 
+                      mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_purecropland_frac.v2.0.tif"))))), 
+                      mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_pasture_frac.v2.0.tif"))))))
+names(treecover_all_lc_terra) <- c("Treecover_Gridcell", 
+                      "Treecover_Natural", 
+                      "Treecover_Cropland", 
+                      "Treecover_Purecropland", 
+                      "Treecover_Pasture")
+
+treecover_dt <- as.data.table(treecover_all_lc_terra, xy = TRUE)
+setnames(treecover_dt, c("x", "y"), c("Lon", "Lat"))
+
+
+# round the table off to 7 decimal places
+treecover_dt[ , Lon := round(Lon, 7)]
+treecover_dt[ , Lat := round(Lat, 7)]
+
+# add full data
+master_full_dt <- merge.data.table(x = master_full_dt, y = treecover_dt, by = c("Lon", "Lat"))
+
+# Report and tidy up
+message(paste0("*** Completed AGB ***"))
+current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count = current_row_size)
+
+rm(agb_dt, treecover_dt)
 
 
 
@@ -262,7 +292,7 @@ if(!file.exists(FWI_file_path)) {
   setnames(FWI_all_years_dt, "WS", "WindSpeed")
   
   
-  #### TEMPERATUE ####
+  #### TEMPERATURE ####
   # also add the mean monthly temperature from a separate netcdf file
   # here I uused the quite cool remapDataTableToReferenceGrid() function instead of the normal resample and round - but I am not sure why I did this!
   temp_rast <- rast(file.path(climate_dir, "TMean_ERA5-LAND_Historical_monmean.nc"))
@@ -545,7 +575,7 @@ mergedgeomorpho_sf <- read_sf(file.path(base_dir, "Terrain", "MergedGeomorpho90.
 for(this_layer in names(mergedgeomorpho_sf)[!names(mergedgeomorpho_sf) %in% c("geometry")]){
   print(this_layer)
   all_terrain_terra <- c(all_terrain_terra, terra::rasterize(x = mergedgeomorpho_sf, y = ref_grid_terra, field = this_layer))
-  plot(all_terrain_terra[[this_layer]])
+  #plot(all_terrain_terra[[this_layer]])
 }
 
 # merged merit file
@@ -555,7 +585,7 @@ mergedmerit_sf <- read_sf(file.path(base_dir, "Terrain", "MergedMERIT.shp"))
 for(this_layer in merit_vars){
   print(this_layer)
   all_terrain_terra <- c(all_terrain_terra, terra::rasterize(x = mergedmerit_sf, y = ref_grid_terra, field = this_layer))
-  plot(all_terrain_terra[[this_layer]])
+  #plot(all_terrain_terra[[this_layer]])
 }
 
 # convert to a data.table and merge
@@ -593,7 +623,7 @@ GPP_dt[, Month := month(Date)]
 # set keys (important for the rolling means) and calculate summaries  
 setkey(GPP_dt, "Lon", "Lat", "Date")
 tic()
-GPP_dt <- add_long_term_means_and_deviations(GPP_dt, gs_dt)
+GPP_dt <- add_long_term_means_and_deviations(GPP_dt, gs_dt, agg_fun = sum)
 toc()
 tic()
 GPP_dt <- add_antecedent_values(GPP_dt)
@@ -629,7 +659,7 @@ GPP_LPJmL_dt[, Month := month(Date)]
 # set keys (important for the rolling means) and calculate summaries  
 setkey(GPP_LPJmL_dt, "Lon", "Lat", "Date")
 tic()
-GPP_LPJmL_dt <- add_long_term_means_and_deviations(GPP_LPJmL_dt, gs_dt)
+GPP_LPJmL_dt <- add_long_term_means_and_deviations(GPP_LPJmL_dt, gs_dt, agg_fun = sum)
 toc()
 tic()
 GPP_LPJmL_dt <- add_antecedent_values(GPP_LPJmL_dt)
