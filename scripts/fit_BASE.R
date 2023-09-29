@@ -495,6 +495,20 @@ model_specifications_list <- list()
 #                                                                            select = TRUE)
 # 
 # model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate8_raw"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("FAPAR12", "PopDens", "HDI", "Slope", "TPI"),
+#                                                                            quadratic_terms = c("Treecover_Gridcell"),
+#                                                                            interaction_terms = c("GPP_index*FWI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+
+
+# 
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
 #                                                                            version_id = paste0(fit_batch_version, ".Candidate9"),
 #                                                                            target = "BurntFraction",
 #                                                                            family = quasibinomial(link=logit),
@@ -519,67 +533,116 @@ model_specifications_list <- list()
 #                                                                            select = TRUE)
 
 
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate11"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("log_Mean_annual_GPP", "PopDens", "HDI", "Slope", "TPI"),
+#                                                                            quadratic_terms = c("Treecover_Gridcell"),
+#                                                                            interaction_terms = c("GPP_index*FWI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# 
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate12"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("PopDens", "HDI", "Slope", "TPI"),
+#                                                                            quadratic_terms = c("Treecover_Gridcell"),
+#                                                                            interaction_terms = c("GPP_index*FWI", "FAPAR12*Mean_annual_GPP"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate13"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("Slope", "TPI"),
+#                                                                            quadratic_terms = c("Treecover_Gridcell"),
+#                                                                            interaction_terms = c("GPP_index*FWI", "FAPAR12*Mean_annual_GPP", "PopDens*HDI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate14"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("PopDens", "HDI"),
+#                                                                            quadratic_terms = c("Treecover_Gridcell"),
+#                                                                            interaction_terms = c("GPP_index*FWI", "FAPAR12*Mean_annual_GPP", "Slope*TPI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+
+
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Candidate15"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("FAPAR12", "PopDens", "HDI",  "TPI"),
+#                                                                            quadratic_terms = c("Treecover_Gridcell", "Slope"),
+#                                                                            interaction_terms = c("GPP_index*FWI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c(),
+#                                                                            select = TRUE)
+# 
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Check1_smooth_PopDens"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("FAPAR12", "HDI",  "TPI", "Slope"),
+#                                                                            quadratic_terms = c("Treecover_Gridcell"),
+#                                                                            interaction_terms = c("GPP_index*FWI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c("PopDens"),
+#                                                                            select = TRUE)
+
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Check2_smooth_Urban"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("FAPAR12", "HDI",  "TPI", "Slope"),
+#                                                                            quadratic_terms = c("Treecover_Gridcell"),
+#                                                                            interaction_terms = c("GPP_index*FWI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c("Urban"),
+#                                                                            select = TRUE)
+# 
+# model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
+#                                                                            version_id = paste0(fit_batch_version, ".Check3_smooth_Wind"),
+#                                                                            target = "BurntFraction",
+#                                                                            family = quasibinomial(link=logit),
+#                                                                            linear_terms = c("FAPAR12", "HDI",  "TPI", "Slope", "PopDens"),
+#                                                                            quadratic_terms = c("Treecover_Gridcell"),
+#                                                                            interaction_terms = c("GPP_index*FWI"),  # Form "Var*Var2"
+#                                                                            fixed_effect_terms = c("Dominant_type"),
+#                                                                            random_effect_terms = c(),
+#                                                                            smooth_terms = c("WindSpeed"),
+#                                                                            select = TRUE)
+
+
 model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = paste0(fit_batch_version, ".Candidate11"),
+                                                                           version_id = paste0(fit_batch_version, "_VERSION_2"),
                                                                            target = "BurntFraction",
                                                                            family = quasibinomial(link=logit),
-                                                                           linear_terms = c("log_Mean_annual_GPP", "PopDens", "HDI", "Slope", "TPI"),
+                                                                           linear_terms = c("FAPAR12", "PopDens", "HDI", "Slope", "TPI"),
                                                                            quadratic_terms = c("Treecover_Gridcell"),
                                                                            interaction_terms = c("GPP_index*FWI"),  # Form "Var*Var2"
                                                                            fixed_effect_terms = c("Dominant_type"),
                                                                            random_effect_terms = c(),
                                                                            smooth_terms = c(),
                                                                            select = TRUE)
-
-
-model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = paste0(fit_batch_version, ".Candidate12"),
-                                                                           target = "BurntFraction",
-                                                                           family = quasibinomial(link=logit),
-                                                                           linear_terms = c("PopDens", "HDI", "Slope", "TPI"),
-                                                                           quadratic_terms = c("Treecover_Gridcell"),
-                                                                           interaction_terms = c("GPP_index*FWI", "FAPAR12*Mean_annual_GPP"),  # Form "Var*Var2"
-                                                                           fixed_effect_terms = c("Dominant_type"),
-                                                                           random_effect_terms = c(),
-                                                                           smooth_terms = c(),
-                                                                           select = TRUE)
-
-model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = paste0(fit_batch_version, ".Candidate13"),
-                                                                           target = "BurntFraction",
-                                                                           family = quasibinomial(link=logit),
-                                                                           linear_terms = c("Slope", "TPI"),
-                                                                           quadratic_terms = c("Treecover_Gridcell"),
-                                                                           interaction_terms = c("GPP_index*FWI", "FAPAR12*Mean_annual_GPP", "PopDens*HDI"),  # Form "Var*Var2"
-                                                                           fixed_effect_terms = c("Dominant_type"),
-                                                                           random_effect_terms = c(),
-                                                                           smooth_terms = c(),
-                                                                           select = TRUE)
-
-model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = paste0(fit_batch_version, ".Candidate14"),
-                                                                           target = "BurntFraction",
-                                                                           family = quasibinomial(link=logit),
-                                                                           linear_terms = c("PopDens", "HDI"),
-                                                                           quadratic_terms = c("Treecover_Gridcell"),
-                                                                           interaction_terms = c("GPP_index*FWI", "FAPAR12*Mean_annual_GPP", "Slope*TPI"),  # Form "Var*Var2"
-                                                                           fixed_effect_terms = c("Dominant_type"),
-                                                                           random_effect_terms = c(),
-                                                                           smooth_terms = c(),
-                                                                           select = TRUE)
-
-model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "Natural",
-                                                                           version_id = paste0(fit_batch_version, ".Candidate14"),
-                                                                           target = "BurntFraction",
-                                                                           family = quasibinomial(link=logit),
-                                                                           linear_terms = c(),
-                                                                           quadratic_terms = c("Treecover_Gridcell"),
-                                                                           interaction_terms = c("GPP_index*FWI", "FAPAR12*Mean_annual_GPP", "Slope*TPI", "PopDens*HDI"),  # Form "Var*Var2"
-                                                                           fixed_effect_terms = c("Dominant_type"),
-                                                                           random_effect_terms = c(),
-                                                                           smooth_terms = c(),
-                                                                           select = TRUE)
-
 
 
 
@@ -764,7 +827,7 @@ for(model_spec in model_specifications_list) {
   # build the formula  
   this_formula_str <- paste(dependent_var, "~")
   if(length(linear_terms) > 0) this_formula_str <- paste(this_formula_str, paste(linear_terms, collapse =  " + "))
-  if(length(quadratic_terms) > 0) this_formula_str <- paste(this_formula_str, paste(paste0("poly(", quadratic_terms, ",2)"), collapse =  " + "), sep = " + ")
+  if(length(quadratic_terms) > 0) this_formula_str <- paste(this_formula_str, paste(paste0("poly(", quadratic_terms, ",2,raw=TRUE)"), collapse =  " + "), sep = " + ")
   if(length(interaction_terms) > 0) this_formula_str <- paste(this_formula_str, paste(interaction_terms, collapse =  " + "), sep = " + ")
   if(length(fixed_effect_terms) > 0) this_formula_str <- paste(this_formula_str, paste(paste0(fixed_effect_terms), collapse =  " + "), sep = " + ")
   if(length(smooth_terms) > 0) this_formula_str <- paste(this_formula_str, paste(paste0("s(", smooth_terms, ", k=", k, ", bs='", basis_splines, "')"), collapse =  " + "), sep = " + ")
@@ -798,7 +861,9 @@ for(model_spec in model_specifications_list) {
                                     outline.col = "white",
                                     ggtheme = ggplot2::theme_gray,
                                     colors = c("#6D9EC1", "white", "#E46726"),
-                                    lab = TRUE)
+                                    lab = TRUE,
+                                    lab_size = 8,
+                                    tl.cex = 12)
     magicPlot(p = pearsons_corrplot, filename = file.path(plot.dir, paste("PearsonsCorrelation", sep = "_")), height = 800, width =800)
     #print(pearsons_corrplot)
     
