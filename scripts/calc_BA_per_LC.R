@@ -1,27 +1,31 @@
 library(terra)
 library(tictoc)
 
-# 
+
+# define root path with here package and 
+here::i_am("scripts/calc_BA_per_LC.R")
+library(here)
+
 firecci_area <- 3
 
 # FireCCI51 pixel data dir
-fire_dir <- "/data/shared/Fire/FireCCI51/pixel"
+fire_dir <- here("external_files/firecci51_pixel_data")
 
 # pre-processed  land cover data
-landcover_dir <- "/data/mforrest/LandUseLandCover/ESACCI/FirEUrisk/cropped_only"
+landcover_dir <- here("external_files/landcover_cci_raw")
+  
+# FireEUrisk target grid and the output directory
+base_dir <- here("external_files", "gridded_9km")
+target_grid <- rast(file.path(base_dir, "FirEUrisk_ref_grid.nc"))
+output_dir <-   file.path(base_dir, "FireCCI51")
 
-# FireEUrisk target grid
-target_grid <- rast("/storage/shared/FirEUrisk/FirEUrisk_ref_grid.nc")
-
-# output directory
-output_dir <- "/storage/shared/FirEUrisk/Gridded_9km/FireCCI51"
 
 
 # years to process
 first_year <- 2001
 last_year <- 2020
 
-# FireCCI grid (to regrid the landcover data too) and gris of 1s to get total number of gridcells
+# FireCCI grid (to regrid the landcover data too) and grid of 1s to get total number of gridcells
 firecci_grid <- rast(file.path(fire_dir, paste(first_year),  paste0(first_year, "01", "01-ESACCI-L3S_FIRE-BA-MODIS-AREA_", firecci_area ,"-fv5.1-LC.tif")))
 
 all_1s <- firecci_grid
