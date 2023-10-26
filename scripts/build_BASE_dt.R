@@ -18,7 +18,10 @@ base_dir <- here("external_files", "gridded_9km/")
 fwi_raw_dir <- here("external_files", "daily_fwi/")
 climate_dir <- here("external_files", "era5_climate/")
 
-version <- "8.0_treecover"
+version <- "9.0_new_lc_classes"
+
+# flag to include long term means and deviations (currently not enabled becuase these weren't found to be useful) 
+if_add_long_terms_means_and_deviations <- FALSE
 
 # select which data sets to use
 doLFMC <- FALSE
@@ -32,19 +35,19 @@ setnames(ref_grid_dt, c("x", "y"), c("Lon", "Lat"))
 #### FIRECCI BURNT AREA ####
 
 # make times for the ESA FireCCI51 data
-times_firecci <- seq(as.Date("2001-01-15"), as.Date("2015-12-15"), by="months")#
-times_landcover <- seq(as.Date("2001-01-15"), as.Date("2015-12-15"), by="years")#
+times_firecci <- seq(as.Date("2001-01-15"), as.Date("2020-12-15"), by="months")#
+times_landcover <- seq(as.Date("2001-01-15"), as.Date("2020-12-15"), by="years")#
 
 
 # remove the master tables from memory
 rm(master_full_dt)
 gc()
 
-for(landcover_class in c("Natural", "Cropland", "Pasture", "PureCropland")) {
+for(landcover_class in c("NCV", "NonFlammable", "PureCropland")) {
   
   # read the burnt area data
-  firecci51_terra <- rast(file.path(base_dir, "FireCCI51", paste0("ESA_CCI_51_9km_", tolower(landcover_class) ,"_frac.v2.0.tif")))
-  lc_area_terra <- rast(file.path(base_dir, "FireCCI51", paste0("ESA_CCI_LC_9km_", tolower(landcover_class) ,"_frac.v2.0.tif")))
+  firecci51_terra <- rast(file.path(base_dir, "FireCCI51", paste0("ESA_CCI_51_9km_", tolower(landcover_class) ,"_frac.tif")))
+  lc_area_terra <- rast(file.path(base_dir, "FireCCI51", paste0("ESA_CCI_LC_9km_", tolower(landcover_class) ,"_frac.tif")))
   #time(firecci51_terra) <- times_firecci
   #time(lc_area_terra) <- lc_area_terra
   
@@ -94,6 +97,9 @@ for(landcover_class in c("Natural", "Cropland", "Pasture", "PureCropland")) {
   # 
 } 
 
+# remove the gridcells where non-flammable landcover types are in the very large majority ( > 99%)
+# TODO consider lower this threshold for cleaner data
+master_full_dt <- master_full_dt[ LandcoverFraction_NonFlammable < 0.99, ]
 
 # initialise tables sizes
 current_row_size <- nrow(master_full_dt)
@@ -252,7 +258,7 @@ master_full_dt <- merge.data.table(x = master_full_dt, y = treecover_dt, by = c(
 message(paste0("*** Completed AGB ***"))
 current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count = current_row_size)
 
-rm(agb_dt, treecover_dt)
+rm(treecover_dt, treecover_dt)
 
 
 
@@ -355,9 +361,7 @@ prec_dt <- FWI_dt[ , c("Lon", "Lat", "Year", "Month", "Prec")]
 setnames(prec_dt, "Prec", "value")
 prec_dt[ , Date := as.Date(paste(Year, Month, 15, sep = "-"))]
 setkey(prec_dt, "Lon", "Lat", "Date")
-tic()
-prec_dt <- add_long_term_means_and_deviations(prec_dt, gs_dt, agg_fun = sum) 
-toc()
+if(if_add_long_terms_means_and_deviations) prec_dt <- add_long_term_means_and_deviations(prec_dt, gs_dt, agg_fun = sum) 
 setnames(prec_dt, gsub(pattern = "value", replacement = "Prec", names(prec_dt)))
 prec_dt[, Date := NULL]
 prec_dt[, Prec := NULL]
@@ -369,7 +373,7 @@ setnames(temp_dt, "Temp", "value")
 temp_dt[ , Date := as.Date(paste(Year, Month, 15, sep = "-"))]
 setkey(temp_dt, "Lon", "Lat", "Date")
 tic()
-temp_dt <- add_long_term_means_and_deviations(temp_dt, gs_dt, agg_fun = mean) 
+if(if_add_long_terms_means_and_deviations)  temp_dt <- add_long_term_means_and_deviations(temp_dt, gs_dt, agg_fun = mean) 
 toc()
 setnames(temp_dt, gsub(pattern = "value", replacement = "Temp", names(temp_dt)))
 temp_dt[, Date := NULL]
@@ -382,7 +386,7 @@ setnames(rad_dt, "Rad", "value")
 rad_dt[ , Date := as.Date(paste(Year, Month, 15, sep = "-"))]
 setkey(rad_dt, "Lon", "Lat", "Date")
 tic()
-rad_dt <- add_long_term_means_and_deviations(rad_dt, gs_dt, agg_fun = mean) 
+if(if_add_long_terms_means_and_deviations)  rad_dt <- add_long_term_means_and_deviations(rad_dt, gs_dt, agg_fun = mean) 
 toc()
 setnames(rad_dt, gsub(pattern = "value", replacement = "Rad", names(rad_dt)))
 rad_dt[, Date := NULL]
@@ -419,13 +423,8 @@ FAPAR_dt[, Month := month(Date)]
 
 # set keys (important for the rolling means) and calculate summaries  
 setkey(FAPAR_dt, "Lon", "Lat", "Date")
-tic()
-FAPAR_dt <- add_long_term_means_and_deviations(FAPAR_dt, gs_dt)
-toc()
-tic()
-FAPAR_dt <- add_antecedent_values(FAPAR_dt)
-toc()
-
+if(if_add_long_terms_means_and_deviations) FAPAR_dt <- add_long_term_means_and_deviations(FAPAR_dt, gs_dt)
+FAPAR_dt <- add_antecedent_values(FAPAR_dt, FUN = mean)
 setnames(FAPAR_dt, gsub(pattern = "value", replacement = "FAPAR", names(FAPAR_dt)))
 FAPAR_dt[, Date := NULL]
 
@@ -622,13 +621,8 @@ GPP_dt[, Month := month(Date)]
 
 # set keys (important for the rolling means) and calculate summaries  
 setkey(GPP_dt, "Lon", "Lat", "Date")
-tic()
-GPP_dt <- add_long_term_means_and_deviations(GPP_dt, gs_dt, agg_fun = sum)
-toc()
-tic()
-GPP_dt <- add_antecedent_values(GPP_dt)
-toc()
-
+if(if_add_long_terms_means_and_deviations) GPP_dt <- add_long_term_means_and_deviations(GPP_dt, gs_dt, agg_fun = sum)
+GPP_dt <- add_antecedent_values(GPP_dt, FUN = sum)
 setnames(GPP_dt, gsub(pattern = "value", replacement = "GPP", names(GPP_dt)))
 GPP_dt[, Date := NULL]
 
@@ -658,12 +652,8 @@ GPP_LPJmL_dt[, Month := month(Date)]
 
 # set keys (important for the rolling means) and calculate summaries  
 setkey(GPP_LPJmL_dt, "Lon", "Lat", "Date")
-tic()
-GPP_LPJmL_dt <- add_long_term_means_and_deviations(GPP_LPJmL_dt, gs_dt, agg_fun = sum)
-toc()
-tic()
-GPP_LPJmL_dt <- add_antecedent_values(GPP_LPJmL_dt)
-toc()
+if(if_add_long_terms_means_and_deviations) GPP_LPJmL_dt <- add_long_term_means_and_deviations(GPP_LPJmL_dt, gs_dt, agg_fun = sum)
+GPP_LPJmL_dt <- add_antecedent_values(GPP_LPJmL_dt, FUN = sum)
 setnames(GPP_LPJmL_dt, gsub(pattern = "value", replacement = "GPP_LPJmL", names(GPP_LPJmL_dt)))
 GPP_LPJmL_dt[, Date := NULL]
 
