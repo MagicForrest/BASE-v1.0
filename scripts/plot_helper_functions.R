@@ -104,14 +104,14 @@ spatialDeltaError <- function(spatial_dt, baseline, obs = "FireCCI51",  overlay 
 IAVPlot <- function(iav_dt, cols = NULL, linewidths = NULL, linetypes = NULL, ...) {
   
   this_iav_for_plotting <- melt(iav_dt, id.vars = c("Year"), variable.name = "Source", value = "Burnt Area")
-  iav_plot <- ggplot(this_iav_for_plotting) + geom_line(aes(x = Year, y = `Burnt Area`, col = Source, linewidth = Source, linetype = Source))
+  iav_plot <- ggplot(data = this_iav_for_plotting, aes(x = Year, y = `Burnt Area`, col = Source, linewidth = Source, linetype = Source)) + geom_line()
   iav_plot <- iav_plot + theme_bw() 
   iav_plot <- iav_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
   if(!is.null(cols))  iav_plot <- iav_plot + scale_color_manual(values = cols)
   if(!is.null(linewidths)) iav_plot <- iav_plot + scale_linewidth_manual(values = linewidths)
   if(!is.null(linetypes))  iav_plot <- iav_plot + scale_linetype_manual(values = linetypes)
   magicPlot(p = iav_plot, ...)
-  
+  return(iav_plot)
 }
 
 
@@ -126,7 +126,7 @@ seasonalPlot <- function(seasonal_dt, cols = NULL, linewidths = NULL, linetypes 
   if(!is.null(linewidths)) seasonal_plot <- seasonal_plot + scale_linewidth_manual(values = linewidths)
   if(!is.null(linetypes))  seasonal_plot <- seasonal_plot + scale_linetype_manual(values = linetypes)
   magicPlot(p = seasonal_plot, ...)
-  
+  return(seasonalPlot)
 }
 
 
