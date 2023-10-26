@@ -13,7 +13,7 @@ fire_dir <- here("external_files/firecci51_pixel_data")
 
 # pre-processed  land cover data
 landcover_dir <- here("external_files/landcover_cci_raw")
-  
+
 # FireEUrisk target grid and the output directory
 base_dir <- here("external_files", "gridded_9km")
 target_grid <- rast(file.path(base_dir, "FirEUrisk_ref_grid.nc"))
@@ -38,12 +38,92 @@ months <- c(paste0(0,1:9), "10", "11", "12" )
 # land cover classes
 all_LC_classes <- list(
   
-  list(name = "Natural", subclasses = c(50, 60, 61, 62, 70, 71, 72, 80, 81, 82, 90, 
-                                     100, 160, 170, 120, 121, 122, 140, 180, 150, 151, 152, 153)),
-  list(name = "Cropland", subclasses =c(10, 11, 12, 20, 30, 40)),
-  list(name = "Pasture", subclasses =c(100, 130)),
-  list(name = "Urban", subclasses = c(190)),
-  list(name = "PureCropland", subclasses = c(10, 11, 20))
+  
+  # # Non-cropland vegetation (NCV)
+  # NCV = list(name = "NCV", subclasses = c(50, # broadleaved evergreen tree
+  #                                         60, 61, 62, # broadleaved deciduous tree
+  #                                         70, 71, 72, # needleaved evergreen tree
+  #                                         80, 81, 82, # needleaved deciduous tree
+  #                                         90, # mixed leaftype tree
+  #                                         100, # mosaic woody-herbaceous 
+  #                                         110, # mosaic herbaceous-woody
+  #                                         120, 121, 122, # shrublands
+  #                                         130, # grassland
+  #                                         140, # lichens and mosses
+  #                                         150, 151, 152, 153,  # sparse vegetation
+  #                                         160, 170, 180)), # flooded vegetation types
+  # 
+  # # Non-burnable (ie fragmentors)
+  # NonFlammable = list(name = "NonFlammable", subclasses = c(190, #urban
+  #                                                           200, 201, 202, # bare areas
+  #                                                           210, # water bodies
+  #                                                           220)), # permanent snow and ice
+  # 
+  # 
+  # # Woodlands and Shrublands (WaS) - AKA - "Natural"
+  # WaS = list(name = "WaS", subclasses = c(50, # broadleaved evergreen tree
+  #                                         60, 61, 62, # broadleaved deciduous tree
+  #                                         70, 71, 72, # needleaved evergreen tree
+  #                                         80, 81, 82, # needleaved deciduous tree
+  #                                         90, # mixed leaftype tree
+  #                                         100, # mosaic woody-herbaceous 
+  #                                         120, 121, 122, # shrublands
+  #                                         140, # lichens and mosses
+  #                                         150, 151, 152, 153,  # sparse vegetation
+  #                                         160, 170, 180)), # flooded vegetation types
+  # 
+  # Grassland
+  AllGrassland = list(name = "AllGrassland", subclasses =c(100, 110, 130)), # grassland and mosaic herbaceous-woody
+  
+  # Pure grassland
+  PureGrassland = list(name = "PureGrassland", subclasses =c(130)), # pure grassland only
+  
+  # Mosaics grassland
+  MosaicGrassland = list(name = "MosaicGrassland", subclasses =c(100, 110)), # both mosiac grassland types
+  
+  # Mosaics grassland
+  MosaicGrasslandDominated= list(name = "MosaicGrasslandDominated", subclasses =c(110)), # grassland dominated mosiac 
+  
+  # Mosaics grassland
+  MosaicWoodyDominated= list(name = "MosaicWoodyDominated", subclasses =c(100)) #  woody dominated mosiac 
+  
+  
+  # 
+  # # Fully inclsuive cropland
+  # Cropland = list(name = "Cropland", subclasses =c(10, 11, 12, # rainfed crops
+  #                                                  20, # crops (irrigated/post flooding)
+  #                                                  30, 40)), # crop/natural mosaics
+  # # - without mosiacs or woody
+  # PureCropland = list(name = "PureCropland", subclasses = c(10, 11, # non-woody rainfed crops
+  #                                                           20)), # crops (irrigated/post flooding),
+  # # - mosiacs only
+  # MosaicCropland = list(name = "MosaicCropland", subclasses = c(30, 40)), # crop/natural mosaics
+  # # - woody only
+  # WoodyCropland = list(name = "WoodyCropland", subclasses = c(12)), # woody
+  # 
+  # # Urban
+  # Urban = list(name = "Urban", subclasses = c(190)), 
+  # 
+  # # Sparse vegetation types
+  # Sparse = list(name = "Sparse", subclasses = c(150, 151, 152, 153)), # sparse vegetation
+  # 
+  # # Everything burnable
+  # All = list(name = "All", subclasses = c(10, 11, 12, # rainfed crops
+  #                                         20, # crops (irrigated/post flooding)
+  #                                         30, 40, # crop/natural mosaics
+  #                                         50, # broadleaved evergreen tree
+  #                                         60, 61, 62, # broadleaved deciduous tree
+  #                                         70, 71, 72, # needleaved evergreen tree
+  #                                         80, 81, 82, # needleaved deciduous tree
+  #                                         90, # mixed leaftype tree
+  #                                         100, # mosaic woody-herbaceous 
+  #                                         110, # mosaic herbacious-woody
+  #                                         120, 121, 122, # shrublands
+  #                                         130, # grassland
+  #                                         140, # lichens and mosses
+  #                                         150, 151, 152, 153,  # sparse vegetation
+  #                                         160, 170, 180, # flooded vegetation types
+  #                                         190)) # urban
   
 )
 
@@ -64,7 +144,7 @@ for(this_LC_class in all_LC_classes) {
   for(year in first_year:last_year){ 
     
     message(paste("************", year, "************" ))
-
+    
     # read the LC data and NN aggregated match it to the FireCII
     if(year %in% 1992:2015) {
       landcover_orignal_res <- rast(file.path(landcover_dir, paste0("ESACCI-LC-L4-LCCS-Map-300m-P1Y-", year, "-v2.0.7cds.nc")))
@@ -145,16 +225,16 @@ for(this_LC_class in all_LC_classes) {
   time(landcover_FirEUrisk_area_fraction) <- seq(as.Date(paste0(first_year, "-01-01")), as.Date(paste0(last_year, "-12-01")), by = "year")
   
   # save everything
-  writeRaster(x = this_lc_burnt_fraction, filename = file.path(output_dir, paste0("ESA_CCI_51_9km_", tolower(this_LC_class$name), "_frac.v2.0.tif")), overwrite=TRUE)
-  writeRaster(x = landcover_FirEUrisk_area_fraction, filename = file.path(output_dir, paste0("ESA_CCI_LC_9km_", tolower(this_LC_class$name), "_frac.v2.0.tif")), overwrite=TRUE)
+  writeRaster(x = this_lc_burnt_fraction, filename = file.path(output_dir, paste0("ESA_CCI_51_9km_", tolower(this_LC_class$name), "_frac.tif")), overwrite=TRUE)
+  writeRaster(x = landcover_FirEUrisk_area_fraction, filename = file.path(output_dir, paste0("ESA_CCI_LC_9km_", tolower(this_LC_class$name), "_frac.tif")), overwrite=TRUE)
   
   
   print(this_lc_burnt_fraction)
-
+  
   message(paste("Finished LC class", this_LC_class$name))
   toc()
   
   rm(landcover_FirEUrisk_area_fraction, this_lc_area_fraction, this_lc_burnt_fraction)
   gc()
- 
+  
 }
