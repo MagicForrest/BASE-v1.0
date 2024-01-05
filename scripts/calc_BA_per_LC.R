@@ -11,7 +11,7 @@ firecci_area <- 3
 # FireCCI51 pixel data dir
 fire_dir <- here("external_files/firecci51_pixel_data")
 
-# pre-processed  land cover data
+# pre-processed land cover data
 landcover_dir <- here("external_files/landcover_cci_raw")
 
 # FireEUrisk target grid and the output directory
@@ -53,39 +53,53 @@ all_LC_classes <- list(
   #                                         150, 151, 152, 153,  # sparse vegetation
   #                                         160, 170, 180)), # flooded vegetation types
   # 
-  # # Non-burnable (ie fragmentors)
-  # NonFlammable = list(name = "NonFlammable", subclasses = c(190, #urban
-  #                                                           200, 201, 202, # bare areas
+  # Non-burnable (ie fragmentors)
+  # NonFlammable = list(name = "NonFlammable", subclasses = c(200, 201, 202, # bare areas
   #                                                           210, # water bodies
   #                                                           220)), # permanent snow and ice
   # 
   # 
-  # # Woodlands and Shrublands (WaS) - AKA - "Natural"
-  # WaS = list(name = "WaS", subclasses = c(50, # broadleaved evergreen tree
+  # Woodlands and Shrublands (WaS) - AKA - "Natural"
+  WaS = list(name = "WaS", subclasses = c(50, # broadleaved evergreen tree
+                                          60, 61, 62, # broadleaved deciduous tree
+                                          70, 71, 72, # needleaved evergreen tree
+                                          80, 81, 82, # needleaved deciduous tree
+                                          90, # mixed leaftype tree
+                                          120, 121, 122, # shrublands
+                                          140, # lichens and mosses
+                                          150, 151, 152, 153,  # sparse vegetation
+                                          160, 170, 180)), # flooded vegetation types
+  
+  # 
+  # Grassland
+  # AllGrassland = list(name = "AllGrassland", subclasses =c(100, 110, 130)), # grassland and mosaic herbaceous-woody
+  
+  # 
+  # # Mosaics grassland
+  # MosaicGrasslandDominated= list(name = "MosaicGrasslandDominated", subclasses =c(110)), # grassland dominated mosiac 
+  # 
+  # # Mosaics grassland
+  # MosaicWoodyDominated= list(name = "MosaicWoodyDominated", subclasses =c(100)) #  woody dominated mosiac
+  
+  # # Shrublands
+  # Shrublands= list(name = "Shrublands", subclasses =c(120, 121, 122)), #  shrublands
+  # 
+  # # Woodlands 
+  # Woodlands = list(name = "Woodlands", subclasses = c(50, # broadleaved evergreen tree
   #                                         60, 61, 62, # broadleaved deciduous tree
   #                                         70, 71, 72, # needleaved evergreen tree
   #                                         80, 81, 82, # needleaved deciduous tree
-  #                                         90, # mixed leaftype tree
-  #                                         100, # mosaic woody-herbaceous 
-  #                                         120, 121, 122, # shrublands
-  #                                         140, # lichens and mosses
-  #                                         150, 151, 152, 153,  # sparse vegetation
-  #                                         160, 170, 180)), # flooded vegetation types
+  #                                         90)), # mixed leaftype tree
   # 
   # Grassland
-  AllGrassland = list(name = "AllGrassland", subclasses =c(100, 110, 130)), # grassland and mosaic herbaceous-woody
+  Grasslands = list(name = "Grasslands", subclasses =c(130)), # pure grassland only
   
-  # Pure grassland
-  PureGrassland = list(name = "PureGrassland", subclasses =c(130)), # pure grassland only
+  # Natural mosaics 
+  NaturalMosaics= list(name = "NaturalMosaics", subclasses =c(100, 110)) #  both woody and grass dominated mosaics
   
-  # Mosaics grassland
-  MosaicGrassland = list(name = "MosaicGrassland", subclasses =c(100, 110)), # both mosiac grassland types
+  # # Sparse vegetation types
+  # Sparse = list(name = "Sparse", subclasses = c(150, 151, 152, 153)), # sparse vegetation
   
-  # Mosaics grassland
-  MosaicGrasslandDominated= list(name = "MosaicGrasslandDominated", subclasses =c(110)), # grassland dominated mosiac 
-  
-  # Mosaics grassland
-  MosaicWoodyDominated= list(name = "MosaicWoodyDominated", subclasses =c(100)) #  woody dominated mosiac 
   
   
   # 
@@ -104,8 +118,7 @@ all_LC_classes <- list(
   # # Urban
   # Urban = list(name = "Urban", subclasses = c(190)), 
   # 
-  # # Sparse vegetation types
-  # Sparse = list(name = "Sparse", subclasses = c(150, 151, 152, 153)), # sparse vegetation
+
   # 
   # # Everything burnable
   # All = list(name = "All", subclasses = c(10, 11, 12, # rainfed crops
