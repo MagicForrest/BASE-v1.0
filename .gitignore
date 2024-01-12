@@ -10,7 +10,7 @@ external_files
 plots
 results
 intermediates
-
+temp
 
 # emacs back-ups
 *~

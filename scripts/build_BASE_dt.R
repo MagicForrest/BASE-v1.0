@@ -99,11 +99,13 @@ for(landcover_class in c("NCV", "NonFlammable", "PureCropland")) {
 
 # remove the gridcells where non-flammable landcover types are in the very large majority ( > 99%)
 # TODO consider lower this threshold for cleaner data
-master_full_dt <- master_full_dt[ LandcoverFraction_NonFlammable < 0.99, ]
+master_full_dt <- master_full_dt[ LandcoverFraction_NonFlammable < 0.99 | is.na(LandcoverFraction_NonFlammable), ]
 
 # initialise tables sizes
 current_row_size <- nrow(master_full_dt)
 message(paste("Initial table size:", current_row_size))
+
+
 
 
 
