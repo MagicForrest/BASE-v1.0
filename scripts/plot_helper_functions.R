@@ -2,7 +2,7 @@
 
 makeOverLay <- function(spatial_dt) {
   
-  overlay <- rnaturalearth::ne_countries(returnclass = "sf")
+  overlay <- rnaturalearth::ne_countries(returnclass = "sf", scale = 50)
   sf::sf_use_s2(FALSE)
   
   # make an appropriate overlay
@@ -10,6 +10,9 @@ makeOverLay <- function(spatial_dt) {
   all_lats <- sort(unique(spatial_dt[["Lat"]]))
   plot_region <- c(xmin = min(all_lons), xmax = max(all_lons), ymin = min(all_lats), ymax = max(all_lats))
   this_overlay <- st_crop(overlay, plot_region)
+  
+  # drop countries not in the FirEUrisk targer area
+  this_overlay <- this_overlay[-which(this_overlay$admin %in%  c("Russia", "Ukraine", "Tunisia", "Algeria", "Belarus",  "Turkey", "Morocco", "Moldova")),,drop =FALSE]
   
   return(this_overlay)
 }
