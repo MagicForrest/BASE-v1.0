@@ -83,7 +83,7 @@ model_specifications_list <- list()
 
 # # A straightforward test with all types of terms
 model_specifications_list[[length(model_specifications_list) + 1]] <- list(landcover = "NCV",
-                                                                           version_id = "First",
+                                                                           version_id = "First_GLM",
                                                                            target = "N_patches_MODIS_CUTOFF6",
                                                                            family = quasibinomial(link=logit),
                                                                            linear_terms = c("GPP_index", "FWI", "HDI", "GPP12", "Treecover_Gridcell", "PopDens"),
@@ -416,7 +416,7 @@ for(model_spec in model_specifications_list) {
       #                      select = model_spec$select,
       #                      family = model_spec$family)
       
-      this_m <-  mgcv::gam(list(N_patches_MODIS_CUTOFF6 ~ s(HDI)+s(PopDens)+s(Treecover_Gridcell) , ~ s(FWI)+s(GPP_index)),
+      this_m <-  mgcv::gam(list(N_patches_MODIS_CUTOFF6 ~ HDI + PopDens + Treecover_Gridcell , ~ FWI + GPP_index),
                             data = fitting_dt, 
                             method = "REML",
                             select = FALSE,
