@@ -28,6 +28,7 @@ lcc_lookup <- list(
   "allgrassland" = list( name = "All grasslands",level = "Category", type = "Grassland"),
   "was" = list( name = "Woodlands and shrublands", level = "Category", type = "NCV"),
   
+  
   # cropland sub-types
   "purecropland" = list( name = "Herb. croplands", level = "Subcategory", type = "Cropland"),
   "woodycropland" = list(name = "Woody croplands", level = "Subcategory", type = "Cropland"),
@@ -36,13 +37,15 @@ lcc_lookup <- list(
   # grassland sub-types
   "mosaicgrasslanddominated" = list( name = "Mosaic grasslands (grass dom.)", level = "Subcategory", type = "Grassland"),
   "mosaicwoodydominated" = list( name = "Mosaic grasslands (woody dom.)", level = "Subcategory", type = "Grassland"),
-  
+  "puregrassland" = list( name = "Pure grasslands", level = "Subcategory", type = "Grassland"),
+  "mosaicgrassland" = list( name = "Grassland mosaics", level = "Subcategory", type = "Grassland"),
   
   # ncv subtypes
   "sparse" = list( name = "Sparse vegetation", level = "Subcategory", type = "NCV"),
   "shrublands" = list( name = "Shrublands", level = "Subcategory", type = "NCV"),
-  "mosaicgrassland" = list( name = "Natural mosaics", level = "Subcategory", type = "NCV"),
-  "puregrassland" = list( name = "Grasslands", level = "Subcategory", type = "NCV")
+  "naturalmosaics" = list( name = "Natural mosaics", level = "Subcategory", type = "NCV"),
+  "grasslands" = list( name = "Grasslands", level = "Subcategory", type = "NCV"),
+  "woodlands" = list( name = "Woodlands", level = "Subcategory", type = "NCV")
 )
 
 
@@ -175,12 +178,13 @@ print(ba_histo)
 
 ### Paper plot
 ba_histo <- ggplot(data = all_total_dt) + geom_col(aes(x = `Land cover class`, y = `Total BA (Mha)`, fill = Type,  alpha = Level))
+ba_histo <- ba_histo + theme_bw() 
 ba_histo <- ba_histo + theme(text = element_text(size = theme_get()$text$size * text.multiplier),
                              axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 magicPlot(p = ba_histo, filename = file.path(results_dir, "All_BurntAreas_histo"), width = 1400, height = 900)
 print(ba_histo)
 
-positions <- c("Total", "All croplands", "Herb. croplands", "Mosaic croplands", "Woody croplands", "NCV", "Woodlands and shrublands", "Natural mosaics", "Grasslands", "Shrublands", "Sparse vegetation")
+positions <- c("Total", "All croplands", "Herb. croplands", "Mosaic croplands", "Woody croplands", "NCV", "Woodlands", "Natural mosaics", "Grasslands", "Shrublands", "Sparse vegetation")
 ba_histo <- ba_histo + scale_x_discrete(limits = positions)
 ba_histo <- ba_histo + scale_alpha_manual(values = c("Total" = 1, "Category" = 1, "Subcategory" = 0.5),
                                           guide="none")
@@ -227,7 +231,7 @@ all_groups <- list(
                                              "NCV")),
   
   list(name = "Supp Figures NCV", subclasses = c("NCV",
-                                                 "Woodlands and shrublands",
+                                                 "Woodlands",
                                                  "Natural mosaics", 
                                                  "Grasslands", 
                                                  "Shrublands", 
@@ -241,6 +245,7 @@ for(this_group in all_groups) {
   
   # subset hist
   ba_histo <- ggplot(data = all_total_dt[ `Land cover class` %in% this_group$subclasses, ]) + geom_col(aes(x = `Land cover class`, y = `Total BA (Mha)`))
+  ba_histo <- ba_histo + theme_bw() 
   ba_histo <- ba_histo + theme(text = element_text(size = theme_get()$text$size * text.multiplier),
                                axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
   magicPlot(p = ba_histo, filename = file.path(results_dir, paste0(gsub(" ", "_", this_group$name), "_", "Histo")), width = 1400, height = 900)
@@ -257,6 +262,7 @@ for(this_group in all_groups) {
   }
   seasonal_plot <- seasonal_plot + scale_x_continuous(breaks = 1:12, labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun","Jul", "Aug", "Sep","Oct","Nov","Dec"))
   seasonal_plot <- seasonal_plot + labs(y = "Mean burnt fraction")
+  seasonal_plot <- seasonal_plot + theme_bw() 
   seasonal_plot <- seasonal_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
   magicPlot(p = seasonal_plot, filename = file.path(results_dir, paste0(gsub(" ", "_", this_group$name), "_", "Seasonal")), width = 1400, height = 900)
   if(this_group$name == "Main Figures") {
@@ -274,6 +280,7 @@ for(this_group in all_groups) {
                                                                 "NCV" ="springgreen4"))
   }
   annual_plot <- annual_plot + labs(y = "Mean burnt fraction")
+  annual_plot <- annual_plot + theme_bw() 
   annual_plot <- annual_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
   magicPlot(p = annual_plot, filename = file.path(results_dir, paste0(gsub(" ", "_", this_group$name), "_", "Yearly")), width = 1400, height = 900)
   
@@ -286,6 +293,7 @@ for(this_group in all_groups) {
                                                                           "NCV" ="springgreen4"))
   }
   annual_plot_norm <- annual_plot_norm + labs(y = "Mean burnt fraction (normalised)")
+  annual_plot_norm <- annual_plot_norm + theme_bw() 
   annual_plot_norm <- annual_plot_norm + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
   magicPlot(p = annual_plot_norm, filename = file.path(results_dir, paste0(gsub(" ", "_", this_group$name), "_", "NormalisedYearly")), width = 1400, height = 900)
   if(this_group$name == "Main Figures") {
@@ -306,7 +314,10 @@ for(this_group in all_groups) {
   bf_cols <- turbo(length(bf_cuts)-1)
   all_maps_dt[ , BurntFraction_cut := cut(BurntFraction, bf_cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE)]
   spatial_plot <- ggplot(all_maps_dt[  `Land cover class`  %in% this_group$subclasses, ]) + geom_tile(aes(x = Lon, y = Lat, fill = BurntFraction_cut)) + scale_fill_viridis(option = "H", name = "%", discrete = TRUE) + facet_wrap(~`Land cover class` ) 
-  spatial_plot <- spatial_plot + coord_cartesian() 
+  spatial_plot <- spatial_plot+ theme_bw() 
+  spatial_plot <- spatial_plot+ coord_cartesian() 
+  spatial_plot <- spatial_plot + scale_x_continuous(expand = c(0, 0)) 
+  spatial_plot <- spatial_plot + scale_y_continuous(expand = c(0, 0)) 
   #spatial_plot <- spatial_plot + labs(title = this_group$name)
   spatial_plot <- spatial_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier),
                                        axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
@@ -325,13 +336,16 @@ for(this_group in all_groups) {
   
   lc_maps <- ggplot(all_lc_frac_maps_dt[  `Land cover class`  %in% this_group$subclasses, ]) + geom_tile(aes(x = Lon, y = Lat, fill = LandCoverFraction)) + scale_fill_viridis(option = "A", name = "Cover fraction (-)") + facet_wrap(~`Land cover class` ) 
   lc_maps <- lc_maps + coord_cartesian() 
+  lc_maps <- lc_maps + theme_bw() 
+  lc_maps <- lc_maps + scale_x_continuous(expand = c(0, 0)) 
+  lc_maps <- lc_maps + scale_y_continuous(expand = c(0, 0)) 
   #lc_maps <- lc_maps + labs(title = this_group$name)
   lc_maps <- lc_maps + theme(text = element_text(size = theme_get()$text$size * text.multiplier),
-                                       axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+                             axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
   lc_maps <- lc_maps +  geom_sf(data=overlay, 
-                                          fill = "transparent", 
-                                          linewidth = 0.2,
-                                          colour="green")
+                                fill = "transparent", 
+                                linewidth = 0.2,
+                                colour="green")
   magicPlot(p = lc_maps, filename = file.path(results_dir, paste0(gsub(" ", "_", this_group$name), "_", "LandCoverFraction_Maps")),  width = 1400, height = 1200)
   if(this_group$name == "Main Figures") {
     magicPlot(p = lc_maps, filename = file.path(plot_dir, paste0("FigureS1_NCV_and_Cropland_LC_Fractions")),  width = 1800, height = 1500)
@@ -350,6 +364,7 @@ for(this_group in all_groups) {
 
 fig1 <- ggarrange(plotlist = list(fig1_histo, fig1_spatial, fig1_annual, fig1_seasonal), 
                   labels = "auto",
+                  widths = c(1,1.2),
                   font.label = list(size = 30, face = "bold"))
 
 print(fig1)
