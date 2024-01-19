@@ -273,9 +273,13 @@ for(this_group in all_groups) {
   }
   
   # plot annual TS
-  annual_plot <- ggplot(all_yearly_dt[  `Land cover class`  %in% this_group$subclasses, ]) + geom_line(aes(x = Year, y = BurntFraction, col = `Land cover class` , linetype = `Land cover class`), linewidth = 2)
+  annual_plot <- ggplot(all_yearly_dt[  `Land cover class`  %in% this_group$subclasses, ]) 
+  annual_plot <- annual_plot + geom_line(aes(x = Year, y = BurntFraction, col = `Land cover class` , linetype = `Land cover class`), linewidth = 2)
+  
   if(this_group$name == "Main Figures") {
-    annual_plot <- ggplot(all_yearly_dt[  `Land cover class`  %in% this_group$subclasses, ]) + geom_line(aes(x = Year, y = BurntFraction, col = `Land cover class`), linewidth = 2)
+    annual_plot <- ggplot(all_yearly_dt[  `Land cover class`  %in% this_group$subclasses, ])  
+    annual_plot <- annual_plot + geom_smooth(aes(x = Year, y = BurntFraction, col = `Land cover class`), method=lm, linewidth = 2, alpha = 0.6) 
+    annual_plot <- annual_plot + geom_line(aes(x = Year, y = BurntFraction, col = `Land cover class`), linewidth = 2)
     annual_plot <- annual_plot + scale_colour_manual(values = c("Herb. croplands" = "orchid4", 
                                                                 "NCV" ="springgreen4"))
   }
@@ -288,7 +292,10 @@ for(this_group in all_groups) {
   # plot normalised annual TS
   annual_plot_norm <- ggplot(all_yearly_normalised_dt[  `Land cover class`  %in% this_group$subclasses, ]) + geom_line(aes(x = Year, y = BurntFraction, col = `Land cover class` , linetype = `Land cover class`), linewidth = 2)
   if(this_group$name == "Main Figures") {
-    annual_plot_norm <- ggplot(all_yearly_normalised_dt[  `Land cover class`  %in% this_group$subclasses, ]) + geom_line(aes(x = Year, y = BurntFraction, col = `Land cover class`), linewidth = 2)
+    annual_plot_norm <- ggplot(all_yearly_normalised_dt[  `Land cover class`  %in% this_group$subclasses, ]) 
+    
+    annual_plot_norm <- annual_plot_norm + geom_smooth(aes(x = Year, y = BurntFraction, col = `Land cover class`), method=lm, linewidth = 2, alpha = 0.6) 
+    annual_plot_norm <- annual_plot_norm + geom_line(aes(x = Year, y = BurntFraction, col = `Land cover class`), linewidth = 2)
     annual_plot_norm <- annual_plot_norm + scale_colour_manual(values = c("Herb. croplands" = "orchid4", 
                                                                           "NCV" ="springgreen4"))
   }
