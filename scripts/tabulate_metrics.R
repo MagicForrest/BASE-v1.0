@@ -24,7 +24,7 @@ baseline_models <- list(
 )
 
 target <- "BurntFraction"
-version <- "BASE_v1.0_exclude_TPI"
+version <- "BASE_v1.0"
 plot_dir <- here("plots/manuscript_BASE_v1.0")
 
 
@@ -41,7 +41,7 @@ for(lcc_type in all_lcc_types) {
     metrics_file <- file.path(run_dir, "metrics.txt" )
     if(file.exists(metrics_file)) {
       metric_line <- read.csv(metrics_file)
-      all_metrics_dt <- rbind(all_metrics_dt, metric_line)
+      all_metrics_dt <- rbind(all_metrics_dt, metric_line, fill=TRUE)
     }
     
   }
@@ -51,6 +51,7 @@ for(lcc_type in all_lcc_types) {
   # select columns
   cols <- c("Description", 
             "Deviance explained", 
+            "Full NME",
             "Null GLM Spatial NME", 
             "GLM Spatial NME", 
             "GLM Null MPD", 
@@ -66,6 +67,24 @@ for(lcc_type in all_lcc_types) {
   # remove "GLM" from the names
   setnames(final_table, gsub(pattern = "GLM ", replacement = "", names(final_table)))
   
+  round_df <- function(x, digits) {
+    # round all numeric variables
+    # x: data frame 
+    # digits: number of digits to round
+    numeric_columns <- names(x)[sapply(x, mode) == 'numeric']
+    print(numeric_columns)
+   
+    print(x[ , ..numeric_columns])
+    
+    x[ , (numeric_columns) := round(.SD, digits), .SDcols = numeric_columns]
+    x
+  }
+  
+  final_table <- round_df(final_table, 3)
+  
+  
+  
+  print(final_table$Description)
   
   # re-order rows
   if(lcc_type == "NCV") {
@@ -79,11 +98,14 @@ for(lcc_type in all_lcc_types) {
       "Omit MEPI",
       "Omit PopDens",
       "Omit Slope",
-      "Include TPI",
+      "Omit TPI",
       "FWI not logged",
       "MEPI and FWI not interacting",
       "Pop dens quadratic",
-      "Treecover not quadratic"
+      "Treecover not quadratic",
+      "Swap GPP12 for FAPAR12",
+      "Include wind", 
+      "Include NCV fraction"
     )
     
     for(row_index in 2:nrow(final_table)){
@@ -110,11 +132,17 @@ for(lcc_type in all_lcc_types) {
       "Omit GPP",
       "Omit PopDens",
       "Omit Slope",
-      "Omit TPI",
+      "Include TPI",
       "FWI not quadratic",
       "GPP GPP3_index not interacting",
       "GPP12 not quadratic"
     )
+    
+    for(row_index in 2:nrow(final_table)){
+      for(col_index in 2:ncol(final_table)){
+        final_table[ row_index, col_index] <- final_table[ row_index, ..col_index ] - final_table[ 1, ..col_index] 
+      }
+    }
     
     final_table <- final_table[match(row_order, final_table$Description),]
     write.table(x = final_table, file = file.path(plot_dir, "Table3_Cropland_metrics.csv"), row.names = FALSE)
