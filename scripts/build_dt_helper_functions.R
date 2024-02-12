@@ -76,12 +76,21 @@ add_long_term_means_and_deviations <- function(dt, gs_dt, agg_fun = mean){
 # TODO add measure of growing season
 add_antecedent_values <- function(dt, FUN = sum){
   
-  # calculate 1,2,3,6 and 12 month antecedent valuesums
+  # calculate 1,2,3,4,5, 6 and 12 month antecedent value
   dt[, value1 := data.table::shift(value, n=1), by=c("Lon", "Lat")]
   dt[, value2 := data.table::shift(data.table::frollapply(value, FUN = FUN, align = "right", n = 2)), by=c("Lon", "Lat")]
   dt[, value3 := data.table::shift(data.table::frollapply(value, FUN = FUN, align = "right", n = 3)), by=c("Lon", "Lat")]
+  dt[, value4 := data.table::shift(data.table::frollapply(value, FUN = FUN, align = "right", n = 4)), by=c("Lon", "Lat")]
+  dt[, value5 := data.table::shift(data.table::frollapply(value, FUN = FUN, align = "right", n = 5)), by=c("Lon", "Lat")]
   dt[, value6 := data.table::shift(data.table::frollapply(value, FUN = FUN, align = "right", n = 6)), by=c("Lon", "Lat")]
   dt[, value12 := data.table::shift(data.table::frollapply(value, FUN = FUN, align = "right", n = 12)), by=c("Lon", "Lat")]
+  
+  dt[, value2_2 := data.table::shift(data.table::frollapply(value, FUN = FUN, align = "right", n = 2), n = 2), by=c("Lon", "Lat")]
+  dt[, value3_2 := data.table::shift(data.table::frollapply(value, FUN = FUN, align = "right", n = 3), n = 2), by=c("Lon", "Lat")]
+  dt[, value4_2 := data.table::shift(data.table::frollapply(value, FUN = FUN, align = "right", n = 4), n = 2), by=c("Lon", "Lat")]
+  dt[, value5_2 := data.table::shift(data.table::frollapply(value, FUN = FUN, align = "right", n = 5), n = 2), by=c("Lon", "Lat")]
+  dt[, value6_2 := data.table::shift(data.table::frollapply(value, FUN = FUN, align = "right", n = 6), n = 2), by=c("Lon", "Lat")]
+  
   
   # also the max of the last 13 months (including this month)
   dt[, Max_value13 := data.table::frollapply(value, FUN = max, align = "right", n = 13), by=c("Lon", "Lat")]
