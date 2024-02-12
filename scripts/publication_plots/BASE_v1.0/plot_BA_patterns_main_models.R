@@ -12,9 +12,9 @@ source(here("scripts", "plot_helper_functions.R"))
 
 
 # define the models to plot
-ncv_model <- "v8_BASELINE_drop_dom"
-cropland_model <- "v8_BASELINE"
-prefix_string <- "v8"
+ncv_model <- "BASE_v1.0"
+cropland_model <- "BASE_v1.0"
+prefix_string <- "BASE_v1.0"
 
 # dataset names
 obs_name <- "FireCCI51"
@@ -68,7 +68,7 @@ spatial_dt_for_plotting[ , value := cut(`Burnt Area`, ba_cuts, right = FALSE, in
 
 spatial_plot <- ggplot(spatial_dt_for_plotting) + geom_tile(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "H", name = "Burnt area (ha)", discrete = TRUE) 
 spatial_plot <- spatial_plot + coord_cartesian() + facet_grid(LCC ~ Source, switch = "y" ) + theme_bw()
-if(!is.null(overlay)) {
+if(!is.null(this_overlay)) {
   spatial_plot <- spatial_plot +  geom_sf(data=this_overlay, 
                                           fill = "transparent", 
                                           linewidth = 0.2,
