@@ -18,7 +18,7 @@ base_dir <- here("external_files", "gridded_9km/")
 fwi_raw_dir <- here("external_files", "daily_fwi/")
 climate_dir <- here("external_files", "era5_climate/")
 
-version <- "9.0_new_lc_classes"
+version <- "v1.0_publication"
 
 # flag to include long term means and deviations (currently not enabled becuase these weren't found to be useful) 
 if_add_long_terms_means_and_deviations <- FALSE
@@ -269,7 +269,7 @@ rm(treecover_dt, treecover_dt)
 # years of FWI to process
 FWI_first_year <- 2001
 FWI_last_year  <- 2014
-FWI_file_name <- "monthly_2001_2014_FWI_and_climate_ERA5-LAND_historical.rds"
+FWI_file_name <- "monthly_2001_2014_FWI_and_climate_ERA5-LAND_historical_withwind.rds"
 FWI_file_path <- file.path(base_dir, "FWI", FWI_file_name)
 
 ### # make the file if it is not there
@@ -317,7 +317,7 @@ if(!file.exists(FWI_file_path)) {
   
   #### SOLAR RADIATION ####
   # also add the mean monthly solar radiation from a separate netcdf file
-  # here do teh same resampling and round procedures to match the grid
+  # here do the same resampling and round procedures to match the grid
   rad_rast <- rast(file.path(climate_dir, "SWR_ERA5-LAND_Historical_monmean.nc"))
   rad_rast <- resample(rad_rast, ref_grid_terra, "near")
   rad_dt <- as.data.table(rad_rast, xy = TRUE)
@@ -332,6 +332,46 @@ if(!file.exists(FWI_file_path)) {
   rad_dt[ , Lon := round(Lon, 7)]
   rad_dt[ , Lat := round(Lat, 7)]
   FWI_and_climate_dt <- merge(FWI_and_climate_dt, rad_dt, by = c("Lon","Lat", "Year", "Month"))
+  
+  
+  #### MAXIMUM WINDPSEED ####
+  # also add the maximum monthly windspeed from a separate netcdf file
+  # here do the same resampling and round procedures to match the grid
+  maxwind_rast <- rast(file.path(climate_dir, "windspeed_ERA5-LAND_Historical_monmax.nc"))
+  maxwind_rast <- resample(maxwind_rast, ref_grid_terra, "near")
+  maxwind_dt <- as.data.table(maxwind_rast, xy = TRUE)
+  setnames(maxwind_dt, c("Lon", "Lat", format(time(maxwind_rast), "%Y-%m")))
+  maxwind_dt <- melt.data.table(maxwind_dt, id.vars = c("Lon", "Lat"))
+  maxwind_dt[ , c("Year", "Month") := tstrsplit(variable, "-")]
+  maxwind_dt[ , variable := NULL]
+  setnames(maxwind_dt, "value", "MaxWindSpeed")
+  maxwind_dt[ , Year := as.integer(Year)]
+  maxwind_dt[ , Month := as.integer(Month)]
+  
+  maxwind_dt[ , Lon := round(Lon, 7)]
+  maxwind_dt[ , Lat := round(Lat, 7)]
+  FWI_and_climate_dt <- merge(FWI_and_climate_dt, maxwind_dt, by = c("Lon","Lat", "Year", "Month"))
+  
+  
+  #### STANDARD DEV WINDPSEED ####
+  # also add the standard deviation  monthly windspeed from a separate netcdf file
+  # here do the same resampling and round procedures to match the grid
+  stdwind_rast <- rast(file.path(climate_dir, "windspeed_ERA5-LAND_Historical_monstd.nc"))
+  stdwind_rast <- resample(stdwind_rast, ref_grid_terra, "near")
+  stdwind_dt <- as.data.table(stdwind_rast, xy = TRUE)
+  setnames(stdwind_dt, c("Lon", "Lat", format(time(stdwind_rast), "%Y-%m")))
+  stdwind_dt <- melt.data.table(stdwind_dt, id.vars = c("Lon", "Lat"))
+  stdwind_dt[ , c("Year", "Month") := tstrsplit(variable, "-")]
+  stdwind_dt[ , variable := NULL]
+  setnames(stdwind_dt, "value", "StdDevWindSpeed")
+  stdwind_dt[ , Year := as.integer(Year)]
+  stdwind_dt[ , Month := as.integer(Month)]
+  
+  stdwind_dt[ , Lon := round(Lon, 7)]
+  stdwind_dt[ , Lat := round(Lat, 7)]
+  FWI_and_climate_dt <- merge(FWI_and_climate_dt, stdwind_dt, by = c("Lon","Lat", "Year", "Month"))
+  
+  
   
   
   print(FWI_and_climate_dt)
@@ -625,6 +665,7 @@ GPP_dt[, Month := month(Date)]
 setkey(GPP_dt, "Lon", "Lat", "Date")
 if(if_add_long_terms_means_and_deviations) GPP_dt <- add_long_term_means_and_deviations(GPP_dt, gs_dt, agg_fun = sum)
 GPP_dt <- add_antecedent_values(GPP_dt, FUN = sum)
+
 setnames(GPP_dt, gsub(pattern = "value", replacement = "GPP", names(GPP_dt)))
 GPP_dt[, Date := NULL]
 
