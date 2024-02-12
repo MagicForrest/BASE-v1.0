@@ -1,9 +1,11 @@
 #### PREAMBLE ####
 library(ggplot2)
+library(ggpubr)
 library(data.table)
 library(viridis)
 library(sf)
 library(tictoc)
+library(mgcv)
 
 # define root path with here package and 
 here::i_am("scripts/publication_plots/BASE_v1.0/plot_final_predictors.R")
@@ -15,12 +17,13 @@ source(here("scripts", "glm_fitting_helper_functions.R"))
 
 lcc_colours <- c("Cropland" = "orchid4", "NCV" ="springgreen4")
 
-agg_method = median
+agg_method = "median"
 
 # define the models to plot
-ncv_model <- "v8_BASELINE_drop_dom"
-cropland_model <- "v8_BASELINE"
-prefix_string <- "v8"
+ncv_model <- "BASE_v1.0"
+cropland_model <- "BASE_v1.0"
+prefix_string <- "BASE_v1.0"
+
 
 # dataset names
 obs_name <- "FireCCI51"
@@ -49,13 +52,14 @@ setnames(ncv_dt, c("Observed_burnt_area", "Predicted_burnt_area_raw"), lcc_names
 setnames(cropland_dt, c("Observed_burnt_area", "Predicted_burnt_area_raw"), lcc_names) 
 
 # calculate the a data.table with the predictor values at mean values
-ncv_prediction_template_dt <- calculatePredictionDT(dt = ncv_dt, model = ncv_model, method = agg_method, npoints = npoints) 
-cropland_prediction_template_dt <- calculatePredictionDT(dt = cropland_dt, model = cropland_model, method = agg_method, npoints = npoints) 
+tic()
+ncv_prediction_template_dt <- calculatePredictionDT(dt = ncv_dt, model = ncv_model, npoints = npoints) 
+cropland_prediction_template_dt <- calculatePredictionDT(dt = cropland_dt, model = cropland_model,  npoints = npoints) 
 
 # calculate burnt area at mean value
 ncv_at_const <- predict(ncv_model, ncv_prediction_template_dt[1,], type = "response")
 cropland_at_const <- predict(cropland_model, cropland_prediction_template_dt[1,], type = "response")
-
+toc()
 
 
 
@@ -76,9 +80,9 @@ all_common_vars <- c()
 
 for(index in 1:length(all_models)) {
   this_model <- all_models[[index]]
-  all_cont_vars <- append(all_cont_vars, getContinuousPredictorsFromModelObject(this_model$model))
-  if(index ==1) all_common_vars <- getContinuousPredictorsFromModelObject(this_model$model)
-  else all_common_vars <- intersect(all_common_vars, getContinuousPredictorsFromModelObject(this_model$model) )
+  all_cont_vars <- append(all_cont_vars, listContinuousPredictors(this_model$model))
+  if(index ==1) all_common_vars <- listContinuousPredictors(this_model$model)
+  else all_common_vars <- intersect(all_common_vars, listContinuousPredictors(this_model$model) )
 }
 all_cont_vars <- unique(c(all_common_vars, all_cont_vars))
 
