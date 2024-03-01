@@ -5,7 +5,7 @@ library(viridis)
 library(sf)
 
 # define root path with here package and 
-here::i_am("scripts/compare_BASE_versions.R")
+here::i_am("scripts/publication_plots/BASE_v1.0/plot_BA_patterns_main_models_v1.0_pub.R")
 library(here)
 source(here("scripts", "plot_utils.R"))
 source(here("scripts", "plot_helper_functions.R"))
@@ -29,7 +29,7 @@ text.multiplier <- 2.8
 
 
 #  Directories for reading data and saving plots
-plot_dir <- here("plots/manuscript_BASE_v1.0")
+pub_results_dir <- here("publication_results/manuscript_BASE_v1.0")
 intermediates_dir <- here("intermediates", "GLMs",  prefix_string)
 
 
@@ -78,7 +78,15 @@ spatial_plot <- spatial_plot + theme(text = element_text(size = theme_get()$text
                                      axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 print(spatial_plot)
 
-magicPlot(p = spatial_plot, filename = file.path(plot_dir, "Figure2"), width = 1100, height = 1200)
+magicPlot(p = spatial_plot, filename = file.path(pub_results_dir, "Figure_04_Spatial_BA"), width = 1100, height = 1200, type = "png")
+
+pdf(file = file.path(pub_results_dir, paste0("Figure_04_Spatial_BA.pdf")), width = 11, height = 12)
+print(spatial_plot)
+dev.off()
+
+pdf(file = file.path(pub_results_dir, paste0("fig_04.pdf")), width = 11, height = 12)
+print(spatial_plot)
+dev.off()
 
 
 
@@ -98,11 +106,20 @@ iav_plot <- iav_plot + theme(text = element_text(size = theme_get()$text$size * 
 
 iav_plot <- iav_plot + facet_wrap( ~LCC, ncol = 1, scales = "free")
 iav_plot <- iav_plot + scale_colour_manual(values = c("Cropland" = "orchid4", 
-                                                            "NCV" ="springgreen4"), guide = FALSE)
+                                                            "NCV" ="springgreen4"), guide = "none")
 iav_plot <- iav_plot + labs(y = "Burnt area (Mha)")
 
 print(iav_plot)
-magicPlot(p = iav_plot, filename = file.path(plot_dir, "Figure3"), width = 1200, height = 1000)
+magicPlot(p = iav_plot, filename = file.path(pub_results_dir, "Figure_05_IAV_BA"), width = 1200, height = 1000)
+
+plot_dim_units = "px"
+pdf(file = file.path(pub_results_dir, paste0("Figure_05_IAV_BA.pdf")), width = 12, height = 10)
+print(iav_plot)
+dev.off()
+
+pdf(file = file.path(pub_results_dir, paste0("fig_05.pdf")), width = 12, height = 10)
+print(iav_plot)
+dev.off()
 
 
 
@@ -121,11 +138,22 @@ seasonal_plot <- seasonal_plot + theme_bw()
 seasonal_plot <- seasonal_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
 seasonal_plot <- seasonal_plot + facet_wrap( ~LCC, ncol = 1, scales = "free")
 seasonal_plot <- seasonal_plot + scale_colour_manual(values = c("Cropland" = "orchid4", 
-                                                      "NCV" ="springgreen4"), guide = FALSE)
+                                                      "NCV" ="springgreen4"), guide = "none")
 seasonal_plot <- seasonal_plot + labs(y = "Burnt area (Mha)")
 
 print(seasonal_plot)
-magicPlot(p = seasonal_plot, filename = file.path(plot_dir, "Figure4"), width = 1200, height = 1000)
+magicPlot(p = seasonal_plot, filename = file.path(pub_results_dir, "Figure_06_Seasonal_BA"), width = 1200, height = 1000)
+
+pdf(file = file.path(pub_results_dir, paste0("Figure_06_Seasonal_BA.pdf")), width = 12, height = 10)
+print(seasonal_plot)
+dev.off()
+
+pdf(file = file.path(pub_results_dir, paste0("fig_06.pdf")), width = 12, height = 10)
+print(seasonal_plot)
+dev.off()
+
+
+
 
 
 #### CONSIDER COMBINING PLOTS??? ####

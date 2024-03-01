@@ -8,7 +8,7 @@ library(tictoc)
 library(mgcv)
 
 # define root path with here package and 
-here::i_am("scripts/publication_plots/BASE_v1.0/plot_final_predictors.R")
+here::i_am("scripts/publication_plots/BASE_v1.0/plot_final_predictors_v1.0_pub.R")
 library(here)
 source(here("scripts", "plot_utils.R"))
 source(here("scripts", "plot_helper_functions.R"))
@@ -30,14 +30,14 @@ obs_name <- "FireCCI51"
 sim_name <- "BASE"
 lcc_names <- c(obs_name, sim_name)
 
+plot_dim_units = "px"
 
-
-text.multiplier <- 2.8
+text.multiplier <- 2.3
 
 npoints <- 1000
 
 #  Directories for reading data and saving plots
-plot_dir <- here("plots/manuscript_BASE_v1.0")
+pub_results_dir <- here("publication_results/manuscript_BASE_v1.0")
 intermediates_dir <- here("intermediates", "GLMs",  prefix_string)
 
 
@@ -71,21 +71,21 @@ all_models <- list(
   
 )
 
-
 #### SINGLE-VARIATE RESPONSES ####
 
 # get all continuous predictors
 all_cont_vars <- c()
 all_common_vars <- c()
-
+variables_with_interactions <- c()
 for(index in 1:length(all_models)) {
   this_model <- all_models[[index]]
   all_cont_vars <- append(all_cont_vars, listContinuousPredictors(this_model$model))
   if(index ==1) all_common_vars <- listContinuousPredictors(this_model$model)
   else all_common_vars <- intersect(all_common_vars, listContinuousPredictors(this_model$model) )
+  variables_with_interactions <- append(variables_with_interactions, getInteractionTerms(this_model$model))
 }
 all_cont_vars <- unique(c(all_common_vars, all_cont_vars))
-
+variables_with_interactions <- unique(unlist(variables_with_interactions))
 
 # calculate responses of all variables in all models
 all_responses_dt <- data.table()
@@ -129,13 +129,32 @@ for(this_predictor in all_cont_vars) {
   if("NCV" %in% unique(this_response_dt$model)) this_response_plot <- this_response_plot + geom_hline(aes(yintercept = ncv_at_const), col = lcc_colours[["NCV"]], linetype = 2)
   if("Cropland" %in% unique(this_response_dt$model)) this_response_plot <- this_response_plot + geom_hline(aes(yintercept = cropland_at_const), col = lcc_colours[["Cropland"]], linetype = 2)
   #print(this_response_plot)
+  
+  if(this_predictor %in% variables_with_interactions) {       
+        this_response_plot <- this_response_plot + annotate("text",
+                                          x = min(this_response_dt[["value"]]) + 0.9 * diff(range(this_response_dt[["value"]])), 
+                                          y = min(this_response_dt[["response"]], na.rm = TRUE) + 0.9 * diff(range(this_response_dt[["response"]], na.rm = TRUE)),
+                                          label = "+",
+                                          size = theme_get()$text$size * text.multiplier)
+  }
+  
+  
   all_predictor_plots[[this_predictor]] <- this_response_plot
   
 }
 
 all_predictor_plot <- ggarrange(plotlist = all_predictor_plots, common.legend = TRUE, legend = "top", ncol = 3, nrow = 4)
 print(all_predictor_plot)
-magicPlot(p = all_predictor_plot, filename = file.path(plot_dir, paste0("Figure5")),  width = 1500, height = 1800)
+magicPlot(p = all_predictor_plot, filename = file.path(pub_results_dir, paste0("Figure_02_SingleVariateResponses")),  width = 1500, height = 1800)
+
+pdf(file = file.path(pub_results_dir, paste0("Figure_02_SingleVariateResponses.pdf")), width = 15, height = 18)
+print(all_predictor_plot)
+dev.off()
+
+pdf(file = file.path(pub_results_dir, paste0("fig_02.pdf")), width = 15, height = 18)
+print(all_predictor_plot)
+dev.off()
+
 
 
 #### INTERACTION RESPONSES ####
@@ -149,27 +168,36 @@ for(this_model in all_models) {
   for(this_interaction in these_interactions){
     
     these_terms <- unlist(these_interactions)
-    inter_plot <- plotInteractionTerm(vars = these_terms, this_model$model, dt = this_model$dt) 
-    inter_plot <- inter_plot + geom_contour(aes(z = response),
-                                            color = "red",
-                                            linetype = 2,
-                                            breaks = this_model$mean_value,
-                                            show.legend = F)
-    inter_plot <- inter_plot + labs(fill = "Burnt fraction \nresponse",
-                                    title = paste(this_model$name, "interaction response: ", paste(these_terms[1], these_terms[2], sep = "*")))
+    
+    inter_plot <- plotInteractionTermDifference(vars = these_terms, this_model$model, dt = this_model$dt) 
+    
+    # inter_plot <- plotInteractionTerm(vars = these_terms, this_model$model, dt = this_model$dt)
+    # 
+    # inter_plot <- inter_plot + geom_contour(aes(z = response),
+    #                                         color = "red",
+    #                                         linetype = 2,
+    #                                         breaks = this_model$mean_value,
+    #                                         show.legend = F)
+    inter_plot <- inter_plot + labs(fill = "Burnt fraction \ndifference",
+                                    title = paste(this_model$name, "interaction effect: ", paste(these_terms[1], these_terms[2], sep = "*")))
     inter_plot <- inter_plot + theme_bw()
     inter_plot <- inter_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
     all_interaction_plots[[paste0(this_model$name, "_", these_terms[1], "*", these_terms[2])]] <- inter_plot
 
   }
   
-  
 }
 
 all_interaction_plots <- ggarrange(plotlist = all_interaction_plots)
-magicPlot(p = all_interaction_plots, filename = file.path(plot_dir, paste0("Figure6")),  width = 1900, height = 800)
+magicPlot(p = all_interaction_plots, filename = file.path(pub_results_dir, paste0("Figure_07_InteractionResponse")),  width = 1900, height = 800)
 
+pdf(file = file.path(pub_results_dir, paste0("Figure_07_InteractionResponse.pdf")), width = 16, height = 7)
+print(all_interaction_plots)
+dev.off()
 
+pdf(file = file.path(pub_results_dir, paste0("fig_07.pdf")), width = 16, height = 7)
+print(all_interaction_plots)
+dev.off()
 
 
 

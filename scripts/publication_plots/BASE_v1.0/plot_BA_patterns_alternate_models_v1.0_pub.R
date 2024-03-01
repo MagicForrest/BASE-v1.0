@@ -33,6 +33,7 @@ text.multiplier <- 2.8
 
 #  Directories for reading data and saving plots
 plot_dir <- here("plots/manuscript_BASE_v1.0")
+pub_results_dir <- here("publication_results/manuscript_BASE_v1.0")
 intermediates_dir <- here("intermediates", "GLMs",  prefix_string)
 
 
@@ -41,13 +42,13 @@ baselines_list <- list(
   
   "NCV" = list(name = "NCV",
                colour = ncv_col,
-               linetype = "dashed",
+               linetype = "22",
                baseline_model_id ="BASE_v1.0",
                baseline_model_name ="BASE v1.0"),
   
   "Cropland" = list(name = "PureCropland",
                     colour = cropland_col,
-                    linetype = "dashed",
+                    linetype = "22",
                     baseline_model_id ="BASE_v1.0",
                     baseline_model_name ="BASE v1.0")     
   
@@ -58,49 +59,51 @@ baselines_list <- list(
 
 sensitivity_list <- list(
   
+  
+  "Omit_HDI_Cropland" = list(name = "Omit_HDI_Cropland",
+                             lcc = "PureCropland",
+                             baseline_str = baselines_list[["Cropland"]]$baseline_model_id,
+                             simulations = list(list(id = "Omit_HDI",
+                                                     col = "royalblue3",
+                                                     linetype = "11"))),
+  
   "MEPI_and_FWI_not_interacting" = list(name = "MEPI_and_FWI_not_interacting",
                                         lcc = "NCV",
                                         baseline_str = baselines_list[["NCV"]]$baseline_model_id,
                                         simulations = list(list(id = "MEPI_and_FWI_not_interacting",
                                                                 col = "sienna2",
-                                                                linetype = "longdash"))),
+                                                                linetype = "11"))),
   
-  "MEPI_GPP3_index_not_interacting" = list(name = "MEPI_GPP3_index_not_interacting",
-                                        lcc = "PureCropland",
-                                        baseline_str = baselines_list[["NCV"]]$baseline_model_id,
-                                        simulations = list(list(id = "MEPI_GPP3_index_not_interacting",
-                                                                col = "sienna2",
-                                                                linetype = "longdash"))),
+  # "MEPI_GPP3_index_not_interacting" = list(name = "MEPI_GPP3_index_not_interacting",
+  #                                          lcc = "PureCropland",
+  #                                          baseline_str = baselines_list[["NCV"]]$baseline_model_id,
+  #                                          simulations = list(list(id = "MEPI_GPP3_index_not_interacting",
+  #                                                                  col = "sienna2",
+  #                                                                  linetype = "11"))),
   
   "Omit_HDI_NCV" = list(name = "Omit_HDI_NCV",
-                    lcc = "NCV",
-                    baseline_str = baselines_list[["NCV"]]$baseline_model_id,
-                    simulations = list(list(id = "Omit_HDI",
-                                            col = "cyan3",
-                                            linetype = "longdash"))),
-                  
-  "Omit_HDI_Cropland" = list(name = "Omit_HDI_Cropland",
-                        lcc = "PureCropland",
-                        baseline_str = baselines_list[["Cropland"]]$baseline_model_id,
+                        lcc = "NCV",
+                        baseline_str = baselines_list[["NCV"]]$baseline_model_id,
                         simulations = list(list(id = "Omit_HDI",
-                                           col = "cyan3",
-                                           linetype = "longdash"))),
-
+                                                col = "royalblue3",
+                                                linetype = "11"))),
+  
+  
   
   "Include_wind_speed_quadratic" = list(name = "Include_wind_speed_quadratic",
-                             lcc = "PureCropland",
-                             baseline_str = baselines_list[["Cropland"]]$baseline_model_id,
-                             simulations = list(list(id = "Include_wind_speed_quadratic",
-                                                     col = "red4",
-                                                     linetype = "longdash"))),
+                                        lcc = "PureCropland",
+                                        baseline_str = baselines_list[["Cropland"]]$baseline_model_id,
+                                        simulations = list(list(id = "Include_wind_speed_quadratic",
+                                                                col = "red4",
+                                                                linetype = "11"))),
   
   
   "GPP3_2_index" = list(name = "GPP3_2_index",
-                                        lcc = "PureCropland",
-                                        baseline_str = baselines_list[["Cropland"]]$baseline_model_id,
-                                        simulations = list(list(id = "GPP3_2_index",
-                                                                col = "chartreuse2",
-                                                                linetype = "longdash")))
+                        lcc = "PureCropland",
+                        baseline_str = baselines_list[["Cropland"]]$baseline_model_id,
+                        simulations = list(list(id = "GPP3_2_index",
+                                                col = "chartreuse2",
+                                                linetype = "11")))
   
 )
 
@@ -165,12 +168,10 @@ for(this_sens in sensitivity_list) {
     this_alt <- this_alt_list$id
     print(this_alt)
     
-    
     this_alt_pretty <- gsub(pattern = "_", replacement = " ", x = this_alt)
     
     # read and format the alt data.table
     alt_dt <- readRDS(file.path(intermediates_dir, paste("BurntFraction", this_sens$lcc, sep = "_"), this_alt , paste("DT", this_alt, "rds", sep = ".")))
-    #setnames(alt_dt, c("Observed_burnt_area", "Predicted_burnt_area_raw"), source_names) 
     subset_columns <- c("Lon", "Lat", "Year", "Month", "Predicted_burnt_area_raw")
     alt_dt[ , ..subset_columns ]
     setnames(alt_dt, "Predicted_burnt_area_raw", this_alt_pretty)
@@ -193,7 +194,7 @@ for(this_sens in sensitivity_list) {
     these_linetypes[[this_alt_pretty]] <- this_alt_list$linetype
   }
   
- 
+  
   #### MAKE SPATIAL PLOT ####  
   sens_spatial_dt[ , value := cut(`Burnt Area`, ba_cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE, dig.lab =4)]
   this_overlay <- makeOverLay(sens_spatial_dt)
@@ -213,6 +214,24 @@ for(this_sens in sensitivity_list) {
   magicPlot(p = spatial_plot, filename = file.path(plot_dir, paste("Sensitivity_Spatial", this_sens$name, sep = "_")), width = 1800, height = 1200)
   
   
+  # paper plots
+  
+  # Fig D2
+  if(this_sens$name == "Omit_HDI_Cropland"){
+    
+    magicPlot(p = spatial_plot, filename = file.path(pub_results_dir, paste("Figure_D02_", this_sens$name)), width = 1800, height = 1200)
+    
+    pdf(file = file.path(pub_results_dir, paste0("Figure_D02_", this_sens$name, ".pdf")), width = 18, height = 12)
+    print(spatial_plot)
+    dev.off()
+    pdf(file = file.path(pub_results_dir, paste0("fig_D02.pdf")), width = 18, height = 12)
+    print(spatial_plot)
+    dev.off()
+    
+    
+  }
+  
+ 
   
   #### SEASONAL PLOT ####
   
@@ -224,11 +243,24 @@ for(this_sens in sensitivity_list) {
   seasonal_plot <- seasonal_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
   seasonal_plot <- seasonal_plot + scale_colour_manual(values = unlist(these_cols))
   seasonal_plot <- seasonal_plot + scale_linetype_manual(values = unlist(these_linetypes))
-  
   seasonal_plot <- seasonal_plot + labs(y = "Burnt area (Mha)")
   
   print(seasonal_plot)
   magicPlot(p = seasonal_plot, filename = file.path(plot_dir, paste("Sensitivity_Seasonal", this_sens$name, sep = "_")), width = 1200, height = 1000)
+  
+  # Fig D4
+  if(this_sens$name == "MEPI_and_FWI_not_interacting"){
+    
+    magicPlot(p = seasonal_plot, filename = file.path(pub_results_dir, paste("Figure_D04", "Seasonal", this_sens$name, sep = "_")), width = 1200, height = 1000)
+    
+    pdf(file = file.path(pub_results_dir, paste0("Figure_D04_Seasonal_", this_sens$name, ".pdf")), width = 16, height = 9)
+    print(seasonal_plot)
+    dev.off()
+    pdf(file = file.path(pub_results_dir, paste0("fig_D04.pdf")), width = 16, height = 9)
+    print(seasonal_plot)
+    dev.off()
+    
+  }
   
   
   #### IAV PLOT ####
@@ -241,13 +273,40 @@ for(this_sens in sensitivity_list) {
   iav_plot <- iav_plot + scale_colour_manual(values = unlist(these_cols))
   iav_plot <- iav_plot + scale_fill_manual(values = unlist(these_cols))
   iav_plot <- iav_plot + scale_linetype_manual(values = unlist(these_linetypes))
-  
-  # iav_plot <- iav_plot + scale_colour_manual(values = c("Cropland" = "orchid4", 
-  #                                                       "NCV" ="springgreen4"), guide = FALSE)
   iav_plot <- iav_plot + labs(y = "Burnt area (Mha)")
   
   print(iav_plot)
   magicPlot(p = iav_plot, filename = file.path(plot_dir, paste("Sensitivity_IAV", this_sens$name, sep = "_")), width = 1200, height = 1000)
   
+  
+  # paper plots
+  
+  # Fig D1
+  if(this_sens$name == "Omit_HDI_Cropland"){
+    
+    magicPlot(p = iav_plot, filename = file.path(pub_results_dir, paste("Figure_D01", "IAV", this_sens$name, sep = "_")), width = 1600, height = 900)
+    
+    pdf(file = file.path(pub_results_dir, paste0("Figure_D01_IAV_", this_sens$name, ".pdf")), width = 16, height = 9)
+    print(iav_plot)
+    dev.off()
+    pdf(file = file.path(pub_results_dir, paste0("fig_D01.pdf")), width = 16, height = 9)
+    print(iav_plot)
+    dev.off()
+    
+  }
+  
+  # Fig D3
+  if(this_sens$name == "Omit_HDI_NCV"){
+    
+    magicPlot(p = iav_plot, filename = file.path(pub_results_dir, paste("Figure_D03", "IAV", this_sens$name, sep = "_")), width = 1600, height = 900)
+    
+    pdf(file = file.path(pub_results_dir, paste0("Figure_D03_IAV_", this_sens$name, ".pdf")), width = 16, height = 9)
+    print(iav_plot)
+    dev.off()
+    pdf(file = file.path(pub_results_dir, paste0("fig_D03.pdf")), width = 16, height = 9)
+    print(iav_plot)
+    dev.off()
+    
+  }
   
 }
