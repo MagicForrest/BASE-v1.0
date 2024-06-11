@@ -11,9 +11,10 @@ ba_cols <- turbo(length(ba_cuts)-1)
 
 #### SETTINGS ####
 
-base_dir <- here("external_files", "gridded_9km/")
+base_dir <- here("external_files", "gridded_9km")
 fwi_raw_dir <- here("external_files", "daily_fwi/")
 climate_dir <- here("external_files", "era5_climate/")
+fry_dir <- file.path(base_dir, "FRY_v2.0")
 
 ncv_lcc_types <- c(50, # broadleaved evergreen tree
                    60, 61, 62, # broadleaved deciduous tree
@@ -58,8 +59,9 @@ euro_data[ , LON_GRID := lon_centres[LON_INDEX]]
 euro_data[ , LAT_INDEX := cut(x = LAT, breaks = lat_boundaries, labels = FALSE)]
 euro_data[ , LAT_GRID := lat_centres[LAT_INDEX]]
 
-# get the month
+# get the month and day
 euro_data[ , MONTH := month(minBD)]
+euro_data[ , DAY := yday(minBD)]
 
 
 #### SUBSET TO FIREURISK DOMAIN ####
@@ -80,9 +82,21 @@ fireurisk_dt <- merge.data.table(x = mask_dt[ , LON_INDEX, LAT_INDEX], y = euro_
 
 fireurisk_cropland_dt <- fireurisk_dt[L1 == 10 & LP1 > 95, ]
 mean(fireurisk_cropland_dt[["area"]])
+sum(fireurisk_cropland_dt[["area"]])
+
+
 
 fireurisk_ncv_dt <- fireurisk_dt[L1 %in% ncv_lcc_types, ]
 mean(fireurisk_ncv_dt[["area"]])
+sum(fireurisk_ncv_dt[["area"]])
+
+
+#### WRITE TABLES ####
+
+write.table(fireurisk_ncv_dt, file = file.path(fry_dir, paste0("FIRECCI51_6D_NCV", ".txt")), row.names = FALSE)
+
+
+stop()
 
 
 #### GET QUANTILES ####
