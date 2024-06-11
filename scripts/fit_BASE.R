@@ -47,7 +47,7 @@ num_threads <- 48
 plot_terms <- TRUE
 
 # data to use
-data_version <- "v1.0_publication"
+data_version <- "v1.01_publication_with_Kummu_GDP"
 
 # version
 fit_batch_version <- "BASE_v1.0"
@@ -55,9 +55,11 @@ fit_batch_version <- "BASE_v1.0"
 #
 sig_figs <- 6
 
+# 
+min_landcover_frac <- 0.1
 
 # re-fit
-force_refit <- TRUE
+force_refit <- FALSE
 
 # years for fitting
 first_year_available <- 2002
@@ -94,10 +96,15 @@ lcc_colours <- c("PureCropland" = "orchid4", "NCV" ="springgreen4")
 
 #### SPECIFY MODELS TO FIT ####
 source(here("scripts/v1.0_sensitivity_models.R"))
+#model_specifications_list <- c(final_v1.0_models(), all_ncv_sensitivity_models(), all_cropland_sensitivity_models())
+model_specifications_list <- c(final_v1.0_models(), all_cropland_sensitivity_models())
+
+
+
 #model_specifications_list <- all_ncv_sensitivity_models()
 #model_specifications_list <- all_cropland_sensitivity_models()
-model_specifications_list <- append(all_ncv_sensitivity_models(), all_cropland_sensitivity_models())
-
+#model_specifications_list <- all_cropland_sensitivity_models_no_interaction()
+#model_specifications_list <- final_v1.0_models()
 
 
 #### DEFINE DIRECTORIES
@@ -192,8 +199,11 @@ sf::sf_use_s2(FALSE)
 master_dt <- readRDS(file.path(data_dir, paste0("master_full_dt_", data_version, ".rds")))
 
 # some data prep
-master_dt[ , PopDens := sqrt(PopDens)]
-master_dt[ , GDP_capita := sqrt(GDP_capita)]
+master_dt[ , Pop_dens := sqrt(Pop_dens)]
+master_dt[ , Pop_dens_static := sqrt(Pop_dens_static)]
+master_dt[ , GDP_capita_Wang := sqrt(GDP_capita_Wang)]
+master_dt[ , GDP_gridcell_Wang := sqrt(GDP_gridcell_Wang)]
+master_dt[ , GDP := sqrt(GDP)]
 
 
 
@@ -213,6 +223,7 @@ if("MEPI" %in% all_predictors) master_dt[ , MEPI := GPP/Max_GPP13]
 if("MEPI2" %in% all_predictors) master_dt[ , MEPI2 := ((GPP+GPP1)/2) /Max_GPP13]
 if("MEPI_LPJmL" %in% all_predictors) master_dt[ , MEPI_LPJmL := GPP_LPJmL/Max_GPP_LPJmL13]
 
+if("PHI" %in% all_predictors) master_dt[ , PHI := (GPP3/3)/Max_GPP13]
 if("GPP3_index" %in% all_predictors) master_dt[ , GPP3_index := (GPP3/3)/Max_GPP13]
 if("GPP4_index" %in% all_predictors) master_dt[ , GPP4_index := (GPP4/4)/Max_GPP13]
 if("GPP5_index" %in% all_predictors) master_dt[ , GPP5_index := (GPP5/5)/Max_GPP13]
@@ -223,6 +234,9 @@ if("GPP5_2_index" %in% all_predictors) master_dt[ , GPP5_2_index := (GPP5_2/5)/M
 if("GPP6_2_index" %in% all_predictors) master_dt[ , GPP6_2_index := (GPP6_2/6)/Max_GPP13]
 
 if("FAPAR_index" %in% all_predictors) master_dt[ , FAPAR_index := FAPAR/Max_FAPAR13]
+
+if("Crop_ratio" %in% all_predictors) master_dt[ , Crop_ratio := LandcoverFraction_PureCropland/LandcoverFraction_NCV]
+
 
 # do transforms (log)
 for(this_predictor in all_predictors){
@@ -321,44 +335,22 @@ for(model_spec in model_specifications_list) {
     # simply don't run if not enough data points
     if(nrow(master_dt) > MIN_DATA_POINTS) {
       
-      #### CORRELATION PLOT ####  
-      
-      # make and save correlation plot
-      all_cor <- cor(na.omit(master_dt[ , ..continuous_predictor_vars]), method = "pearson")
-      pearsons_corrplot <- ggcorrplot(all_cor, hc.order = TRUE, type = "lower",
-                                      outline.col = "white",
-                                      ggtheme = ggplot2::theme_gray,
-                                      colors = c("#6D9EC1", "white", "#E46726"),
-                                      lab = TRUE,
-                                      lab_size = 8,
-                                      tl.cex = 24,
-                                      show.legend = FALSE)
-      magicPlot(p = pearsons_corrplot, filename = file.path(plot.dir, paste("PearsonsCorrelation", sep = "_")), height = 800, width =800)
-      #print(pearsons_corrplot)
-      
-      
-      
+   
       #### SUBSET THE DATA ####
       
       # select the columns we need for this particular model
-      if("Year" %in% names(master_dt))  { 
-        col_subset <- c("Lon", "Lat", "Year","Month",  dependent_var, paste("LandcoverFraction", landcover, sep = "_"), "FuelClass", predictor_vars)
-      } else {
-        col_subset <- c("Lon", "Lat", "Month",  dependent_var, paste("LandcoverFraction", landcover, sep = "_"), "FuelClass", predictor_vars)
-      }
+      col_subset <- c("Lon", "Lat", "Year","Month",  dependent_var, paste("LandcoverFraction", landcover, sep = "_"), "FuelClass", predictor_vars)
+     
       # in case some things (such as land cover fractions) appear twice
       col_subset <- unique(col_subset)
       
-      # select columns (variables)  and require at least 0.1% of the area covered by the landcover type
+      # select columns (variables) and require at least 1% of the area covered by the landcover type
+      # Not that this very loose area minimum requirement of 0.1% will likely be deepened later on, this just an initial winnowing
       valid_subset_dt <- na.omit(master_dt[get(paste("LandcoverFraction", landcover, sep = "_")) > 0.01, ..col_subset])
       
       #### FROM THIS POINT THE MASTER_DT IS NO LONGER USED FOR THIS MODEL FIT ####
       
-      
-      # remove variables with extremely large GDP_capita (for both fitting and predicting) or high Urban fraction
-      if("GDP_capita" %in% predictor_vars)  valid_subset_dt <- valid_subset_dt[GDP_capita < sqrt(200000),]
-      if("Urban" %in% predictor_vars)  valid_subset_dt <- valid_subset_dt[Urban < 0.5,]
-      
+   
       
       # if scale predictors desired
       if(isTRUE(model_spec$scale_predictors)) {
@@ -381,13 +373,31 @@ for(model_spec in model_specifications_list) {
       
       # clean some rich/highly urban gridcells to give final 
       fitting_dt <- copy(training_dt)
+      # changed so now fitting/training are identical
       
       # limit the predictor to 1.0 in case of very rare numerical artefacts
       if(target == "BurntFraction") fitting_dt <- fitting_dt[ , c(dependent_var) := cap_at_1(.SD), .SDcols = dependent_var]
-      if(landcover == "NCV") fitting_dt <- fitting_dt[ LandcoverFraction_NCV > 0.15, ] 
-      if(landcover == "PureCropland") fitting_dt <- fitting_dt[ LandcoverFraction_PureCropland > 0.15, ] 
       
+      # only fit where the fraction of LCT of interest is above a certain threshold
+      fitting_dt <- fitting_dt[ get(paste("LandcoverFraction", landcover, sep = "_"))  > min_landcover_frac, ] 
+       
+       
+    
       
+      #### CORRELATION PLOT ####  
+      
+      # make and save correlation plot
+      all_cor <- cor(na.omit(valid_subset_dt[get(paste("LandcoverFraction", landcover, sep = "_"))  > min_landcover_frac,]), method = "pearson")
+      pearsons_corrplot <- ggcorrplot(all_cor, hc.order = TRUE, type = "lower",
+                                      outline.col = "white",
+                                      ggtheme = ggplot2::theme_gray,
+                                      colors = c("#6D9EC1", "white", "#E46726"),
+                                      lab = TRUE,
+                                      lab_size = 8,
+                                      tl.cex = 24,
+                                      show.legend = FALSE)
+      magicPlot(p = pearsons_corrplot, filename = file.path(plot.dir, paste("PearsonsCorrelation", sep = "_")), height = 800, width =800)
+      #print(pearsons_corrplot)
       
       
       # if("Urban" %in% predictor_vars) fitting_dt <- fitting_dt[Urban < 0.5,] 
@@ -453,11 +463,25 @@ for(model_spec in model_specifications_list) {
       print(this_formula_str)
       tic()
       
-      this_m <-  mgcv::gam(this_formula,
-                           data = fitting_dt,
-                           method = "REML",
-                           select = model_spec$select,
-                           family = model_spec$family)
+      
+      # if got a smooth term then fit a GAM
+      if(length(smooth_terms) > 0 ){
+        this_m <-  mgcv::gam(this_formula,
+                             data = fitting_dt,
+                             method = "REML",
+                             select = model_spec$select,
+                             family = model_spec$family)
+      }
+      # else do a GLM
+      # in my testing I found that fit a the same model with gam() and glm() gave identical results,
+      # I think certain packages work with GLM objects but not GAM objects
+      # therefore we fit with glm() where possible
+      
+      else  {
+        this_m <-  glm(this_formula,
+                             data = fitting_dt,
+                             family = model_spec$family)
+      }
       
       
       
@@ -479,6 +503,12 @@ for(model_spec in model_specifications_list) {
       
       print(" ** Writing summary")
       writeLines(capture.output(print(this_summary)), con = this_model_textfile)
+      
+      print(" ** Writing coefficients table")
+      library(broom)
+      this_m_table <- tidy(this_m)
+      print(this_m_table)
+      write.table(this_m_table, file = file.path(plot.dir, "coeffs_table.txt"), row.names = FALSE)
       
       print(" ** Calculating AIC and QAIC...")
       
@@ -534,7 +564,7 @@ for(model_spec in model_specifications_list) {
         
       }
       
-    
+      
       
       ####  CALCULATE PREDICTED VALUES #### 
       
@@ -651,7 +681,7 @@ for(model_spec in model_specifications_list) {
       
       
       
-      #### VARAIBLE INFLATIO FACTOR ####   
+      #### VARAIBLE INFLATION FACTOR ####   
       # if only only linear terms, calculate the variable inflation factor (VIF)
       if(length(quadratic_terms) == 0 & length(interaction_terms) == 0 & length(fixed_effect_terms) == 0){
         print(" ** Calculating variable inflation factor")
@@ -712,8 +742,6 @@ for(model_spec in model_specifications_list) {
         bar.height.unit <- unit(0.7, units = "npc")
         effect_plot <- effect_plot + guides(fill = guide_colorbar(barwidth = 2, barheight = bar.height.unit))
         
-        
-        
         # add an asterisk if the single variable actually has an interaction too   
         variables_with_interactions <- NULL
         if(length(interaction_terms) > 0) variables_with_interactions <- unique(unlist(strsplit(x =interaction_terms, split = "*", fixed = TRUE)))
@@ -722,7 +750,7 @@ for(model_spec in model_specifications_list) {
           effect_plot <- effect_plot + annotate("text",
                                                 x = min(this_visreg$fit[[this_var]]) + 0.9 * diff(range(this_visreg$fit[[this_var]])), 
                                                 y = min(this_visreg$res[["visregRes"]], na.rm = TRUE) + 0.9 * diff(range(this_visreg$res[["visregRes"]], na.rm = TRUE)),
-                                                label = "\u2020",
+                                                label = "+",
                                                 size = theme_get()$text$size * text.multiplier)
         }
         

@@ -18,7 +18,7 @@ base_dir <- here("external_files", "gridded_9km/")
 fwi_raw_dir <- here("external_files", "daily_fwi/")
 climate_dir <- here("external_files", "era5_climate/")
 
-version <- "v1.0_publication"
+version <- "v1.01_publication_with_Kummu_GDP"
 
 # flag to include long term means and deviations (currently not enabled becuase these weren't found to be useful) 
 if_add_long_terms_means_and_deviations <- FALSE
@@ -105,7 +105,7 @@ master_full_dt <- master_full_dt[ LandcoverFraction_NonFlammable < 0.99 | is.na(
 current_row_size <- nrow(master_full_dt)
 message(paste("Initial table size:", current_row_size))
 
-
+####
 
 
 
@@ -235,15 +235,15 @@ rm(agb_dt, agb_terra)
 # take the average of 2000, 2005, 2010, 2015
 tc_years <- c( 2000, 2005, 2010, 2015)
 treecover_all_lc_terra <- c(mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_all_frac.v2.0.tif"))))), 
-                      mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_natural_frac.v2.0.tif"))))), 
-                      mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_cropland_frac.v2.0.tif"))))), 
-                      mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_purecropland_frac.v2.0.tif"))))), 
-                      mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_pasture_frac.v2.0.tif"))))))
-names(treecover_all_lc_terra) <- c("Treecover_Gridcell", 
-                      "Treecover_Natural", 
-                      "Treecover_Cropland", 
-                      "Treecover_Purecropland", 
-                      "Treecover_Pasture")
+                            mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_natural_frac.v2.0.tif"))))), 
+                            mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_cropland_frac.v2.0.tif"))))), 
+                            mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_purecropland_frac.v2.0.tif"))))), 
+                            mean(c(rast(file.path(base_dir, "LandSat", paste0("LandSat_tree_cover_", tc_years, "_pasture_frac.v2.0.tif"))))))
+names(treecover_all_lc_terra) <- c("Treecover", 
+                                   "Treecover_Natural", 
+                                   "Treecover_Cropland", 
+                                   "Treecover_Purecropland", 
+                                   "Treecover_Pasture")
 
 treecover_dt <- as.data.table(treecover_all_lc_terra, xy = TRUE)
 setnames(treecover_dt, c("x", "y"), c("Lon", "Lat"))
@@ -328,7 +328,7 @@ if(!file.exists(FWI_file_path)) {
   setnames(rad_dt, "value", "Rad")
   rad_dt[ , Year := as.integer(Year)]
   rad_dt[ , Month := as.integer(Month)]
-
+  
   rad_dt[ , Lon := round(Lon, 7)]
   rad_dt[ , Lat := round(Lat, 7)]
   FWI_and_climate_dt <- merge(FWI_and_climate_dt, rad_dt, by = c("Lon","Lat", "Year", "Month"))
@@ -532,14 +532,14 @@ GDP_terra <- rast(file.path(base_dir, "SocioEconomic", "GDP_2005_FirEURisk_Grid.
 GDP_terra <- mask(GDP_terra, ref_grid_terra)
 GDP_terra <- resample(GDP_terra, ref_grid_terra)
 GDP_dt <- as.data.table(as.data.frame(GDP_terra, xy = TRUE))
-setnames(GDP_dt, c("Lon", "Lat", "GDP_gridcell"))
+setnames(GDP_dt, c("Lon", "Lat", "GDP_gridcell_Wang"))
 rm(GDP_terra)
 
 RoadDens_terra <- rast(file.path(base_dir, "SocioEconomic", "RD_DENS_GRIP4_FirEURisk_Grid_2018.nc"))
 RoadDens_terra <- mask(RoadDens_terra, ref_grid_terra)
 RoadDens_terra <- resample(RoadDens_terra, ref_grid_terra)
 RoadDens_dt <- as.data.table(as.data.frame(RoadDens_terra, xy = TRUE))
-setnames(RoadDens_dt, c("Lon", "Lat", "RoadDens"))
+setnames(RoadDens_dt, c("Lon", "Lat", "Road_dens"))
 socioeconomic_dt <- merge.data.table(GDP_dt, RoadDens_dt, by = c("Lon", "Lat"))
 rm(RoadDens_terra)
 
@@ -547,23 +547,42 @@ PopDens_terra <- rast(file.path(base_dir, "SocioEconomic", "POPDENSITY_SSP1_2020
 PopDens_terra <- mask(PopDens_terra, ref_grid_terra)
 PopDens_terra <- resample(PopDens_terra, ref_grid_terra)
 PopDens_dt <- as.data.table(as.data.frame(PopDens_terra, xy = TRUE))
-setnames(PopDens_dt, c("Lon", "Lat", "PopDens"))
+setnames(PopDens_dt, c("Lon", "Lat", "Pop_dens_static"))
 socioeconomic_dt <- merge.data.table(socioeconomic_dt, PopDens_dt, by = c("Lon", "Lat"))
 rm(PopDens_terra)
+
+# update time evolving pop dens
+current_years <- range(unique(master_full_dt[["Year"]]))
+
+Pop_dens_dt <- data.table()
+for(this_year in current_years[1]:current_years[2]){
+  Pop_dens_terra <- rast(file.path(base_dir, "SocioEconomic", paste0("EU_popd_",this_year,".nc")))
+  Pop_dens_terra <- mask(Pop_dens_terra, ref_grid_terra)
+  Pop_dens_terra <- resample(Pop_dens_terra, ref_grid_terra)
+  Pop_dens_dt_temp <- as.data.table(as.data.frame(Pop_dens_terra, xy = TRUE))
+  setnames(Pop_dens_dt_temp, c("Lon", "Lat", "Pop_dens"))
+  Pop_dens_dt_temp[, Year := this_year]
+  Pop_dens_dt <- rbind(Pop_dens_dt, Pop_dens_dt_temp)
+  rm(Pop_dens_dt_temp) 
+}
 
 
 socioeconomic_dt[ , Lon := round(Lon, 7)]
 socioeconomic_dt[ , Lat := round(Lat, 7)]
 master_full_dt <- merge.data.table(master_full_dt, socioeconomic_dt, by = c("Lon", "Lat"))
 
+Pop_dens_dt[ , Lon := round(Lon, 7)]
+Pop_dens_dt[ , Lat := round(Lat, 7)]
+master_full_dt <- merge.data.table(master_full_dt, Pop_dens_dt, by = c("Lon", "Lat", "Year"))
+
 # Report and tidy up
 message(paste0("*** Completed Socioeconomic***"))
 current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count = current_row_size)
 rm(socioeconomic_dt, GDP_dt, RoadDens_dt, PopDens_dt)
 
-#### KUMMU HDI ####
+#### KUMMU HDI & GDP ####
 
-HDI_terra <- rast(file.path(base_dir, "HDI", "Kummu_HDI_FirEUrisk.nc"))
+HDI_terra <- rast(file.path(base_dir, "HDI_GDP", "Kummu_HDI_FirEUrisk.nc"))
 HDI_dt <- as.data.table(as.data.frame(HDI_terra, xy = TRUE))
 setnames(HDI_dt, new = c("Lon", "Lat", as.character(time(HDI_terra))))
 HDI_dt <- melt(HDI_dt, id.vars = c("Lon", "Lat"))
@@ -576,6 +595,19 @@ HDI_dt[ , Lon := round(Lon, 7)]
 HDI_dt[ , Lat := round(Lat, 7)]
 master_full_dt <- merge.data.table(master_full_dt, HDI_dt, by = c("Lon", "Lat", "Year"))
 
+
+GDP_terra <- rast(file.path(base_dir, "HDI_GDP", "Kummu_GDP_FirEUrisk.nc"))
+GDP_dt <- as.data.table(as.data.frame(GDP_terra, xy = TRUE))
+setnames(GDP_dt, new = c("Lon", "Lat", as.character(time(GDP_terra))))
+GDP_dt <- melt(GDP_dt, id.vars = c("Lon", "Lat"))
+setnames(GDP_dt, c("variable", "value"), c("Date", "GDP"))
+GDP_dt[, Date := as.Date(Date)]
+GDP_dt[, Year := year(Date)]
+GDP_dt[, Date := NULL]
+
+GDP_dt[ , Lon := round(Lon, 7)]
+GDP_dt[ , Lat := round(Lat, 7)]
+master_full_dt <- merge.data.table(master_full_dt, GDP_dt, by = c("Lon", "Lat", "Year"))
 
 
 # Report and tidy up
@@ -719,8 +751,8 @@ rm(GPP_LPJmL_dt, GPP_LPJmL_terra)
 
 # calculate GDP per capita
 # this catch cases where
-master_full_dt[, GDP_capita := pmin(Inf, GDP_gridcell/PopDens)]
-master_full_dt$GDP_capita[master_full_dt$PopDens == 0] <- 0
+master_full_dt[, GDP_capita_Wang := pmin(Inf, GDP_gridcell_Wang/Pop_dens_static)]
+master_full_dt$GDP_capita_Wang[master_full_dt$Pop_dens_static == 0] <- 0
 
 
 #### SAVE FILES ####
