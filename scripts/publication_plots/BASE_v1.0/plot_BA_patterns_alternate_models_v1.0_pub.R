@@ -24,7 +24,6 @@ cropland_col <- "orchid4"
 ncv_col <- "springgreen4"
   
 
-# linetype_list <- c("FireCCI51" = )
 
 # for plotting
 ba_cuts <- c(0,5,10,20,50,100,200,500,1000,2000,5000,10000)
@@ -60,12 +59,15 @@ baselines_list <- list(
 sensitivity_list <- list(
   
   
-  "Omit_HDI_Cropland" = list(name = "Omit_HDI_Cropland",
-                             lcc = "PureCropland",
-                             baseline_str = baselines_list[["Cropland"]]$baseline_model_id,
-                             simulations = list(list(id = "Omit_HDI",
-                                                     col = "royalblue3",
-                                                     linetype = "11"))),
+  "Cropland_socioeconomics" = list(name = "Cropland_socioeconomics",
+                                   lcc = "PureCropland",
+                                   baseline_str = baselines_list[["Cropland"]]$baseline_model_id,
+                                   simulations = list(list(id = "Omit_GDP",
+                                                           col = "royalblue3",
+                                                           linetype = "11"),
+                                                      list(id = "Replace_GDP_with_HDI",
+                                                           col = "hotpink",
+                                                           linetype = "11"))),
   
   "MEPI_and_FWI_not_interacting" = list(name = "MEPI_and_FWI_not_interacting",
                                         lcc = "NCV",
@@ -74,12 +76,6 @@ sensitivity_list <- list(
                                                                 col = "sienna2",
                                                                 linetype = "11"))),
   
-  # "MEPI_GPP3_index_not_interacting" = list(name = "MEPI_GPP3_index_not_interacting",
-  #                                          lcc = "PureCropland",
-  #                                          baseline_str = baselines_list[["NCV"]]$baseline_model_id,
-  #                                          simulations = list(list(id = "MEPI_GPP3_index_not_interacting",
-  #                                                                  col = "sienna2",
-  #                                                                  linetype = "11"))),
   
   "Omit_HDI_NCV" = list(name = "Omit_HDI_NCV",
                         lcc = "NCV",
@@ -90,12 +86,12 @@ sensitivity_list <- list(
   
   
   
-  "Include_wind_speed_quadratic" = list(name = "Include_wind_speed_quadratic",
-                                        lcc = "PureCropland",
-                                        baseline_str = baselines_list[["Cropland"]]$baseline_model_id,
-                                        simulations = list(list(id = "Include_wind_speed_quadratic",
-                                                                col = "red4",
-                                                                linetype = "11"))),
+  "Wind_speed_quadratic" = list(name = "Wind_speed_quadratic",
+                                lcc = "PureCropland",
+                                baseline_str = baselines_list[["Cropland"]]$baseline_model_id,
+                                simulations = list(list(id = "Wind_speed_quadratic",
+                                                        col = "red4",
+                                                        linetype = "11"))),
   
   
   "GPP3_2_index" = list(name = "GPP3_2_index",
@@ -155,6 +151,9 @@ for(this_baseline in baselines_list) {
 #### DO THE SENSITIVITY PLOT ####
 for(this_sens in sensitivity_list) {
   
+  
+  print(paste("** Doing sensitiviy plots: ", this_sens$name ))
+  
   # get the baselines
   sens_spatial_dt <- spatial_baselines[[paste(this_sens$baseline_str, this_sens$lcc, sep = "_")]]
   sens_seasonal_dt <- seasonal_baselines[[paste(this_sens$baseline_str, this_sens$lcc, sep = "_")]]
@@ -166,7 +165,7 @@ for(this_sens in sensitivity_list) {
   for(this_alt_list in this_sens$simulations) {
     
     this_alt <- this_alt_list$id
-    print(this_alt)
+    print(paste(" **** Reading sensitivity simulation: ", this_alt))
     
     this_alt_pretty <- gsub(pattern = "_", replacement = " ", x = this_alt)
     
@@ -197,15 +196,17 @@ for(this_sens in sensitivity_list) {
   
   #### MAKE SPATIAL PLOT ####  
   sens_spatial_dt[ , value := cut(`Burnt Area`, ba_cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE, dig.lab =4)]
-  this_overlay <- makeOverLay(sens_spatial_dt)
+  suppressWarnings(this_overlay <- makeOverLay(sens_spatial_dt))
   
-  spatial_plot <- ggplot(sens_spatial_dt) + geom_tile(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "H", name = "Burnt area (ha)", discrete = TRUE) 
+  spatial_plot <- ggplot(sens_spatial_dt) + geom_tile(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "H", name = "Burnt area (ha)", discrete = TRUE)
   spatial_plot <- spatial_plot + coord_cartesian() + facet_wrap( ~ Source) + theme_bw()
   if(!is.null(this_overlay)) {
-    spatial_plot <- spatial_plot +  geom_sf(data=this_overlay, 
-                                            fill = "transparent", 
-                                            linewidth = 0.2,
-                                            colour= "magenta")
+      suppressMessages(
+        spatial_plot <- spatial_plot +  geom_sf(data=this_overlay, 
+                                                fill = "transparent", 
+                                                linewidth = 0.2,
+                                                colour= "magenta")
+      )
   }
   spatial_plot <- spatial_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier),
                                        axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) 
@@ -217,21 +218,20 @@ for(this_sens in sensitivity_list) {
   # paper plots
   
   # Fig D2
-  if(this_sens$name == "Omit_HDI_Cropland"){
+  if(this_sens$name == "Cropland_socioeconomics"){
     
-    magicPlot(p = spatial_plot, filename = file.path(pub_results_dir, paste("Figure_D02_", this_sens$name)), width = 1800, height = 1200)
+    magicPlot(p = spatial_plot, filename = file.path(pub_results_dir, paste0("Figure_D02_", this_sens$name)), width = 1500, height = 1800)
     
-    pdf(file = file.path(pub_results_dir, paste0("Figure_D02_", this_sens$name, ".pdf")), width = 18, height = 12)
+    pdf(file = file.path(pub_results_dir, paste0("Figure_D02_", this_sens$name, ".pdf")), width = 15, height = 18)
     print(spatial_plot)
     dev.off()
-    pdf(file = file.path(pub_results_dir, paste0("fig_D02.pdf")), width = 18, height = 12)
+    pdf(file = file.path(pub_results_dir, paste0("fig_D02.pdf")), width = 15, height = 18)
     print(spatial_plot)
     dev.off()
-    
     
   }
   
- 
+  
   
   #### SEASONAL PLOT ####
   
@@ -246,12 +246,12 @@ for(this_sens in sensitivity_list) {
   seasonal_plot <- seasonal_plot + labs(y = "Burnt area (Mha)")
   
   print(seasonal_plot)
-  magicPlot(p = seasonal_plot, filename = file.path(plot_dir, paste("Sensitivity_Seasonal", this_sens$name, sep = "_")), width = 1200, height = 1000)
+  magicPlot(p = seasonal_plot, filename = file.path(plot_dir, paste("Sensitivity_Seasonal", this_sens$name, sep = "_")), width = 1600, height = 900)
   
   # Fig D4
   if(this_sens$name == "MEPI_and_FWI_not_interacting"){
     
-    magicPlot(p = seasonal_plot, filename = file.path(pub_results_dir, paste("Figure_D04", "Seasonal", this_sens$name, sep = "_")), width = 1200, height = 1000)
+    magicPlot(p = seasonal_plot, filename = file.path(pub_results_dir, paste("Figure_D04", "Seasonal", this_sens$name, sep = "_")), width = 1600, height = 900)
     
     pdf(file = file.path(pub_results_dir, paste0("Figure_D04_Seasonal_", this_sens$name, ".pdf")), width = 16, height = 9)
     print(seasonal_plot)
@@ -266,7 +266,7 @@ for(this_sens in sensitivity_list) {
   #### IAV PLOT ####
   sens_iav_dt[ , `Burnt Area`:= `Burnt Area`/1000000]
   iav_plot <- ggplot(data = sens_iav_dt, aes(x = Year, y = `Burnt Area`, col = Source,  linetype = Source)) 
-  iav_plot <- iav_plot + geom_smooth(aes( col = Source,  linetype = Source, fill = Source), method=lm, linewidth = 2, alpha = 0.3) 
+  iav_plot <- iav_plot + geom_smooth(aes( col = Source,  linetype = Source, fill = Source), method=lm, formula = y ~ x, linewidth = 2, alpha = 0.3) 
   iav_plot <- iav_plot + geom_line(linewidth = 2)
   iav_plot <- iav_plot + theme_bw() 
   iav_plot <- iav_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
@@ -282,7 +282,7 @@ for(this_sens in sensitivity_list) {
   # paper plots
   
   # Fig D1
-  if(this_sens$name == "Omit_HDI_Cropland"){
+  if(this_sens$name == "Cropland_socioeconomics"){
     
     magicPlot(p = iav_plot, filename = file.path(pub_results_dir, paste("Figure_D01", "IAV", this_sens$name, sep = "_")), width = 1600, height = 900)
     

@@ -7,7 +7,7 @@ library(tictoc)
 library(gt)
 
 # define root path with here package and 
-here::i_am("scripts/tabulate_metrics.R")
+here::i_am("scripts/publication_plots/BASE_v1.0/tabulate_metrics_v1.0_pub.R")
 library(here)
 source(here("scripts", "plot_utils.R"))
 source(here("scripts", "plot_helper_functions.R"))
@@ -18,6 +18,9 @@ source(here("scripts", "glm_fitting_helper_functions.R"))
 target <- "BurntFraction"
 version <- "BASE_v1.0"
 plot_dir <- here("publication_results/manuscript_BASE_v1.0")
+dir.create(plot_dir, recursive = TRUE, showWarnings = FALSE)
+
+# threshold
 
 
 #  Versions and directories for reading data and saving plots
@@ -27,23 +30,22 @@ all_model_types <- list(list(name = "NCV",
                                "BASE v1.0",
                                "Omit FWI",
                                "Omit HDI",
-                               "Omit Treecover_Gridcell", 
+                               "Omit Treecover", 
                                "Omit FAPAR12",
                                "Omit MEPI",
-                               "Omit PopDens",
+                               "Omit Pop_dens",
                                "Omit Slope",
                                "Omit TPI",
                                "Include wind speed", 
-                               "Include NCV fraction",
                                "FWI not logged",
                                "MEPI and FWI not interacting",
                                "Pop dens quadratic",
+                               "MEPI quadratic",
                                "Treecover not quadratic",
                                "Replace FAPAR12 with GPP12",
+                               "Include HDI x Pop_dens",
                                "Replace HDI with GDP",
-                               "Include HDI x GDP",
-                               "Include HDI x PopDens",
-                               "Include PopDens x GDP"
+                               "Replace HDI with Pop_dens x GDP"
                              ),
                              tab_num = 2), 
                         
@@ -52,24 +54,23 @@ all_model_types <- list(list(name = "NCV",
                              row_subset_order =  c(
                                "BASE v1.0",
                                "Omit FWI",
-                               "Omit HDI",
+                               "Omit GDP",
                                "Omit GPP12",
-                               "Omit GPP3_index",
+                               "Omit PHI",
                                "Omit MEPI",
-                               "Omit PopDens",
+                               "Omit Pop_dens",
                                "Omit Slope",
                                "Omit wind speed",
                                "Include TPI",
-                               "Wind speed not quadratic",
                                "FWI not quadratic",
                                "GPP12 not quadratic",
-                               "MEPI GPP3_index interacting",
-                               "Replace GPP3_index with GPP6_index",
+                               "MEPI not quadratic",
+                               "PHI quadratic",
+                               "MEPI PHI interacting",
                                "Replace MEPI with GPP",
-                               "Replace HDI with GDP",
-                               "Include HDI x GDP",
-                               "Include HDI x PopDens",
-                               "Include PopDens x GDP"),
+                               "Include GDP x Pop_dens",
+                               "Replace GDP with HDI",
+                               "Replace GDP with Pop_dens x HDI"),
                              tab_num = 3) 
 )
 

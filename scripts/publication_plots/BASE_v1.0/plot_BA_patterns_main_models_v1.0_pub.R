@@ -67,7 +67,9 @@ spatial_dt_for_plotting <- melt(spatial_dt, id.vars = c("Lon", "Lat", "LCC"), va
 spatial_dt_for_plotting[ , value := cut(`Burnt Area`, ba_cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE, dig.lab =4)]
 
 spatial_plot <- ggplot(spatial_dt_for_plotting) + geom_tile(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "H", name = "Burnt area (ha)", discrete = TRUE) 
-spatial_plot <- spatial_plot + coord_cartesian() + facet_grid(LCC ~ Source, switch = "y" ) + theme_bw()
+spatial_plot <- spatial_plot + coord_cartesian(expand = FALSE) + facet_grid(LCC ~ Source, switch = "y" ) + theme_bw()
+spatial_plot <- spatial_plot + scale_x_continuous(expand = c(0, 0))
+spatial_plot <- spatial_plot +scale_y_continuous(expand = c(0, 0))
 if(!is.null(this_overlay)) {
   spatial_plot <- spatial_plot +  geom_sf(data=this_overlay, 
                                           fill = "transparent", 
