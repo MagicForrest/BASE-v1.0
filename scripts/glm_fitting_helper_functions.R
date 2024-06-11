@@ -54,20 +54,12 @@ calcNMSE <- function(mod, obs, area) {
 listContinuousPredictors <- function(x){
   
   # determine list of predictor variable involved
-  tic()
   all_vars <- as.character(attr(x$terms, "variables"))[3:length(as.character(attr(x$terms, "variables")))] 
-  print("INVESTIGATION.  Got all_vars")
-  toc()
-  
+
   # identify fixed terms so we can avoid adding them (since we don't wanna add column of NAs)
-  tic()
   all_factors <- names(x$var.summary[sapply(x$var.summary, function(x) class(x) == "factor")])
-  print("INVESTIGATION.  Got all_factors")
-  toc()
-  
   
   # extract polynomial and splines
-  tic()
   for(this_var in all_vars) {
     
     # polynomials
@@ -85,10 +77,7 @@ listContinuousPredictors <- function(x){
     }
     
   }
-  print("INVESTIGATION.  Got final list.")
-  toc()
-  
-  
+ 
   return(all_vars[!all_vars %in% all_factors])
   
   
@@ -115,6 +104,7 @@ calculatePredictionDT <- function(dt, model_object, agg.method, npoints = 100) {
   tic()
   if(missing(agg.method) || missing(dt)) {
     print("Using pre-calculated median values")
+    print(data.frame(model_object$var.summary)[2,])
     line_dt <- as.data.table(data.frame(model_object$var.summary)[2,])
   }
   else if(is.character(agg.method)){
@@ -131,7 +121,7 @@ calculatePredictionDT <- function(dt, model_object, agg.method, npoints = 100) {
     print("Doing custom")
     line_dt <- dt[ , lapply(.SD, agg.method, na.rm=TRUE), .SDcols = all_continuous_predictors]
   }
-  print("INVESTIGATION: Made prediction DT")
+
   toc()
   
   return(line_dt[rep(1, npoints)])
@@ -176,8 +166,8 @@ predictForPlotting <- function(var, dt, model){
   
   # generate data for the linear term and predict
   this_dt <- copy(dt)
-  this_var_summary <- model$var.summary[[var]]
-  this_dt[ , c(var) := seq(this_var_summary[1], this_var_summary[3], length.out = nrow(dt))]
+  reqrd_range <- range(model$data[[var]])
+  this_dt[ , c(var) := seq(reqrd_range[1], reqrd_range[2], length.out = nrow(dt))]
   
   # IDENTIFY FACTOR IF THERE IS ONE
   fixed_effect <- getFactorPredictorsFromModelObject(model)
@@ -196,8 +186,10 @@ predictForPlotting <- function(var, dt, model){
     for_plotting <- this_dt
   }
   
-  # now predict with standard errors
-  for_plotting[ , c("fit_link", "se_link")  := predict(model, for_plotting, se.fit = TRUE)]
+  # now predict with standard errors (catch gam case)
+  if("gam" %in% class(model))   for_plotting[ , c("fit_link", "se_link")  := predict(model, for_plotting, se.fit = TRUE)]
+  else  for_plotting[ , c("fit_link", "se_link", "residual_scale")  := predict(model, for_plotting, se.fit = TRUE)]
+  # note we need to assugn the "residual_scale" parameters but we are ignoring it
   for_plotting[ , response :=  model$family$linkinv(fit_link) ]
   for_plotting[ , se_upper :=  model$family$linkinv(fit_link + (1.96 * se_link)) ]
   for_plotting[ , se_lower :=  model$family$linkinv(fit_link - (1.96 *se_link)) ]
@@ -290,6 +282,95 @@ plotSimpleTermVisReg <- function(this_visreg, var, model, interaction_terms = NU
   
 }
 
+
+
+# 
+plotInteractionTermDifference <- function(vars, model, dt, ranges, levels_to_plot = NULL){
+  
+  print(paste0(" **** Plotting interaction term: ", paste(vars, collapse = "*")))
+  
+  # generate data for the interaction term
+  single_dt <- copy(dt)
+  # first variable is comparatively easy
+  var1 <- vars[1]
+  reqrd_range1 <- range(model$data[[var1]])
+  single_dt[ , c(var1) := seq(reqrd_range1[1], reqrd_range1[2], length.out = nrow(dt))]
+  # second variable requires copying the data.table many times
+  var2 <- vars[2]
+  reqrd_range2 <- range(model$data[[var2]])
+  this_dt <- data.table()
+  for(this_var2_value in seq(reqrd_range2[1], reqrd_range2[2], length.out = nrow(dt))){
+    temp_dt <- copy(single_dt)
+    temp_dt[ , c(var2) := this_var2_value]
+    this_dt <- rbind(this_dt, temp_dt)
+    rm(temp_dt)
+  }
+  
+  # IDENTIFY FACTOR IF THERE IS ONE
+  fixed_effect <- names(model$var.summary[sapply(model$var.summary, function(x) class(x) == "factor")])
+  if(length(fixed_effect) > 1) stop("Can only plot data with at most single factor (i.e. only one fixed effect)")
+  
+  # DETERMINE IF WE PLOT AT ALL LEVELS OR JUST THE INDICATED ONES
+  if(length(fixed_effect) > 0) {
+    if(is.null(levels_to_plot) | missing(levels_to_plot)) {
+      if(sum(!levels_to_plot %in% model$xlevels[[1]])) stop("Requested to plot a fator level that doesn't seem to be in the data")
+      levels_to_plot <- model$xlevels[[1]]
+    }
+  }
+  
+  # if necessary repeat for each factor present 
+  if(length(fixed_effect) > 0) {
+    for_plotting <- data.table()
+    for(this_level in levels_to_plot){
+      this_level_dt <- copy(this_dt)
+      set(this_level_dt, j = fixed_effect, value = factor(this_level, levels = levels_to_plot))
+      for_plotting <- rbind(for_plotting, this_level_dt)
+    }
+  }
+  else{
+    for_plotting <- this_dt
+  }
+  
+  # now predict with standard errors
+  if("gam" %in% class(model))   for_plotting[ , c("fit_link", "se_link")  := predict(model, for_plotting, se.fit = TRUE)]
+  else  for_plotting[ , c("fit_link", "se_link", "residual_scale")  := predict(model, for_plotting, se.fit = TRUE)]
+  for_plotting[ , response :=  model$family$linkinv(fit_link) ]
+  for_plotting[ , se_upper :=  model$family$linkinv(fit_link + (1.96 * se_link)) ]
+  for_plotting[ , se_lower :=  model$family$linkinv(fit_link - (1.96 *se_link)) ]
+  for_plotting[ , se :=  model$family$linkinv(1.96 *se_link) ]
+
+  # calculate the interaction term is isolation
+  print(paste(var1, var2, sep = ":"))
+  
+  interaction_coefficient <- model$coefficients[[paste(var1, var2, sep = ":")]]
+
+  # calculate the interaction term (only) which implictly is on the link scale
+  for_plotting[ , interaction_term_link := get(var1) * get(var2) * interaction_coefficient]
+  
+  # calculate the model response *without* the interaction term by subtracting the it (still on the link scale)
+  for_plotting[ , without_interaction_link := fit_link - interaction_term_link]
+  
+  # temporary diagnostic plot - check the difference on the link scale before transforming
+  for_plotting[ , temp_diff_link := fit_link - without_interaction_link]
+  temp_this_plot <- ggplot(data = for_plotting, mapping = aes(x = .data[[var1]], y = .data[[var2]])) + geom_raster(aes( fill = temp_diff_link)) +  xlab(var1) + ylab(var2) + scale_fill_viridis() +  scale_x_continuous(expand = c(0,0)) +
+    scale_y_continuous(expand = c(0,0)) 
+  temp_this_plot2 <- ggplot(data = for_plotting, mapping = aes(x = .data[[var1]], y = .data[[var2]])) + geom_raster(aes( fill = interaction_term_link)) +  xlab(var1) + ylab(var2) + scale_fill_viridis() +  scale_x_continuous(expand = c(0,0)) +
+    scale_y_continuous(expand = c(0,0)) 
+
+  
+  # convert the response without the interaction back to the response scale
+  for_plotting[ , without_interaction_reponse := model$family$linkinv(without_interaction_link)]
+
+  # finally, calculate the difference between the prediction with and without the interaction term on the response scale
+  for_plotting[ , response_diff := response - without_interaction_reponse]
+  
+  # plot (and return)
+  this_plot <- ggplot(data = for_plotting, mapping = aes(x = .data[[var1]], y = .data[[var2]])) + geom_raster(aes( fill = response_diff)) +  xlab(var1) + ylab(var2) + scale_fill_viridis() +  scale_x_continuous(expand = c(0,0)) +
+    scale_y_continuous(expand = c(0,0)) 
+  
+  return(this_plot)
+  
+}
 
 
 # 
