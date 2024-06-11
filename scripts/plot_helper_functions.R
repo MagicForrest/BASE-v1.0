@@ -1,4 +1,97 @@
-
+extractTerms <- function(x, type){
+  
+  #### EXTRACT THE FORULA OBJECT IF NECCESSARY ####
+  this_class <- class(x) 
+  
+  # simple case for a formula
+  if(this_class[1] == "formula") this_formula <- x
+  # works for a GLM
+  else if(this_class[1] == "glm") this_formula <- x$formula
+  # else fail (check for gam later)
+  else stop("Can't get valid formula object)")
+  
+  #### CONVERT AND SPLIT ####
+  this_chars <- as.character(this_formula)
+  target <-  this_chars[2]
+  all_terms <- unlist(strsplit(x = this_chars[3], " + ", fixed = TRUE))
+  
+  all_predictors <- c()
+  all_polynomials <- c()
+  all_orders <- c()
+  all_smooths <- c()
+  
+  #### IDENTIFY POLYNOMIAL TERMS ####
+  for(this_term in all_terms) {
+    if(substr(this_term, 1, 5) == "poly(") {
+      #get the variables
+      first_string <- strsplit(this_term, ",")[[1]][1]
+      this_poly <- gsub(pattern = "poly(", replacement = "", x = first_string, fixed = TRUE)
+      all_predictors <- append(all_predictors, this_poly)
+      all_terms <- replace(x = all_terms, all_terms == this_term, this_poly)
+      all_polynomials <- append(all_polynomials, this_poly)
+      # get the order
+      second_string <- strsplit(this_term, ",")[[1]][2]
+      this_order <- as.numeric(second_string)
+      all_orders <- append(all_orders, this_order)
+    }
+  }
+  
+  #### IDENTIFY SMOOTH TERMS ####
+  for(this_term in all_terms) {
+    if(substr(this_term, 1, 2) == "s(") {
+      #get the variables
+      first_string <- strsplit(this_term, ",")[[1]][1]
+      this_smooth <- gsub(pattern = "smooth(", replacement = "", x = first_string, fixed = TRUE)
+      all_predictors <- append(all_predictors, this_smooth)
+      all_terms <- replace(x = all_terms, all_terms == this_term, this_smooth)
+      all_smooths <- append(all_smooths, this_smooth)
+    }
+  }
+  
+  #### IDENTIFY INTERACTION TERMS ####
+  for(this_term in all_terms) {
+    terms_with_interactions <- c()
+    interaction_terms <- c()
+    # interactions
+    if(grepl("*", this_term, fixed = TRUE)) {
+      #get the variables
+      these_terms <- unlist(strsplit(x = this_term, " * ", fixed = TRUE))
+      all_terms <- all_terms[! all_terms %in% this_term] 
+      all_terms <- append(all_terms, these_terms)
+      terms_with_interactions <- append(terms_with_interactions, these_terms)
+      interaction_terms <- append(interaction_terms, this_term)
+    }
+  }
+  
+  #### RETURN BASED ON TYPE ####
+  if(missing(type) || type == "full") {
+    return(
+      list(target = target,
+           predictors = all_terms,
+           polynomials = all_polynomials,
+           orders = all_orders,
+           smooths = all_smooths,
+           interactions = interaction_terms,
+           with_interactions <- unique(terms_with_interactions))
+    )
+  }
+  else if(type == "predictors" || type == "all") {
+    return(all_terms)
+  }
+  else if(type == "smooths") {
+    return(all_smooths)
+  } 
+  else if(type == "polynomials") {
+    return(all_polynomials)
+  }
+  else if(type == "interactions") {
+    return(interaction_terms)
+  }
+  else if(type == "with_interactions") {
+    return(unique(terms_with_interactions))
+  }
+  
+}
 
 makeOverLay <- function(spatial_dt) {
   
@@ -104,7 +197,7 @@ spatialDeltaError <- function(spatial_dt, baseline, obs = "FireCCI51",  overlay 
 
 
 
-IAVPlot <- function(iav_dt, cols = NULL, linewidths = NULL, linetypes = NULL, ...) {
+IAVPlot <- function(iav_dt, cols = NULL, linewidths = NULL, linetypes = NULL, text.multiplier =3, ...) {
   
   this_iav_for_plotting <- melt(iav_dt, id.vars = c("Year"), variable.name = "Source", value = "Burnt Area")
   iav_plot <- ggplot(data = this_iav_for_plotting, aes(x = Year, y = `Burnt Area`, col = Source, linewidth = Source, linetype = Source)) + geom_line()
