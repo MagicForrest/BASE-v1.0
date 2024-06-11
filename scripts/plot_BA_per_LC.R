@@ -82,7 +82,6 @@ all_lc_frac_maps_dt <- data.table()
 # loop over LC types
 for(this_bf_file in list.files(path = input_dir, pattern = "^ESA_CCI_51.*tif$")){
   
-  
   # read data (both burnt fraction and land cover) and extract the name of the land cover type
   this_bf_rast <- rast(file.path(input_dir, this_bf_file))
   this_bf_name <- strsplit(this_bf_file, "_")[[1]][[5]]
@@ -164,7 +163,8 @@ all_maps_dt[ , BurntFraction := BurntFraction * 100]
 
 #### PLOTS ####
 
-
+# print the data for the numbers in the text
+print(all_total_dt)
 
 
 # plot total burnt area
