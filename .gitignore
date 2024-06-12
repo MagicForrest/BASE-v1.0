@@ -6,12 +6,19 @@
 BASE.Rproj
 
 # directories not to be tracked
-external_files
-plots
+
+# this construction 
+/external_files/links/
+/plots/*/
 results
 intermediates
 temp
 publication_results
+/fitted_models/GLMs
+
+publication_results-bup/
+results-bup/
+
 
 # emacs back-ups
 *~
