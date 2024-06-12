@@ -12,7 +12,7 @@ analysis_version <- "BASE_v1.0"
 
 
 # FireCCI51 pixel data dir
-fire_dir <- here("external_files/firecci51_pixel_data")
+fire_dir <- here("external_files/links/firecci51_pixel_data")
 
 # pre-processed land cover data
 landcover_dir <- here("external_files/links/landcover_cci_raw")
