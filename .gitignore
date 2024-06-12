@@ -3,13 +3,14 @@
 .Rhistory
 .RData
 .Ruserdata
-BASE.Rproj
+*.Rproj
 
 # directories not to be tracked
 
 # this construction 
 /external_files/links/
 /plots/*/
+/bf_per_lct/*/
 results
 intermediates
 temp

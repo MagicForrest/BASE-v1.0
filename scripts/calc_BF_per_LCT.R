@@ -3,22 +3,24 @@ library(tictoc)
 
 
 # define root path with here package and 
-here::i_am("scripts/calc_BA_per_LC.R")
+here::i_am("scripts/calc_BF_per_LCT.R")
 library(here)
 
 firecci_area <- 3
+
+analysis_version <- "BASE_v1.0"
+
 
 # FireCCI51 pixel data dir
 fire_dir <- here("external_files/firecci51_pixel_data")
 
 # pre-processed land cover data
-landcover_dir <- here("external_files/landcover_cci_raw")
+landcover_dir <- here("external_files/links/landcover_cci_raw")
 
 # FireEUrisk target grid and the output directory
-base_dir <- here("external_files", "gridded_9km")
-target_grid <- rast(file.path(base_dir, "FirEUrisk_ref_grid.nc"))
-output_dir <-   file.path(base_dir, "FireCCI51")
-
+target_grid <- rast(here("external_files", "links", "gridded_9km", "FirEUrisk_ref_grid.nc"))
+output_dir <-   here("bf_per_lct", analysis_version)
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
 
 # years to process
