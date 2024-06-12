@@ -42,10 +42,10 @@ lcc_lookup <- list(
   
   # ncv subtypes
   "sparse" = list( name = "Sparse vegetation", level = "Subcategory", type = "NCV"),
-  "shrublands" = list( name = "Shrublands", level = "Subcategory", type = "NCV"),
+  "shrubland" = list( name = "Shrubland", level = "Subcategory", type = "NCV"),
   "naturalmosaics" = list( name = "Natural mosaics", level = "Subcategory", type = "NCV"),
-  "grasslands" = list( name = "Grasslands", level = "Subcategory", type = "NCV"),
-  "woodlands" = list( name = "Woodlands", level = "Subcategory", type = "NCV")
+  "grassland" = list( name = "Grassland", level = "Subcategory", type = "NCV"),
+  "woodland" = list( name = "Woodland", level = "Subcategory", type = "NCV")
 )
 
 
