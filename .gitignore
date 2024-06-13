@@ -11,6 +11,7 @@
 /external_files/links/
 /plots/*/
 /bf_per_lct/*/
+/data_tables/*/
 results
 intermediates
 temp
