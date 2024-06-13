@@ -221,8 +221,6 @@ for(this_LC_class in all_LC_classes) {
       message("Division to get burnt fraction done.")
       toc()
       
-      print(this_burnt_fraction)
-
       add(this_lc_burnt_fraction) <- this_burnt_fraction
       
       rm(this_fire_rast, 
