@@ -14,11 +14,17 @@ tic()
 
 #### SETTINGS ####
 
-base_dir <- here("external_files", "gridded_9km/")
-fwi_raw_dir <- here("external_files", "daily_fwi/")
-climate_dir <- here("external_files", "era5_climate/")
+analysis_version <- "BASE_v1.0" # used for directory
+analysis_subversion <- "publication" # used for filename
 
-version <- "v1.01_publication_with_Kummu_GDP"
+base_dir <- here("external_files", "links", "gridded_9km/")
+fwi_raw_dir <- here("external_files", "links", "daily_fwi/")
+climate_dir <- here("external_files", "links", "era5_climate/") # only used if the big climate/FWI table is missing 
+output_dir <- here("data_tables", analysis_version) # to store the final table
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+
+
+
 
 # flag to include long term means and deviations (currently not enabled becuase these weren't found to be useful) 
 if_add_long_terms_means_and_deviations <- FALSE
@@ -756,7 +762,7 @@ master_full_dt$GDP_capita_Wang[master_full_dt$Pop_dens_static == 0] <- 0
 
 
 #### SAVE FILES ####
-saveRDS(master_full_dt, file.path(base_dir, paste0("master_full_dt_", version, ".rds")))
+saveRDS(master_full_dt, file.path(output_dir, paste0("master_full_dt_", analysis_version, "_", analysis_subversion, ".rds")))
 
 print(names(master_full_dt))
 
