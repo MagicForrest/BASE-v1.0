@@ -37,30 +37,28 @@ lcc_lookup <- list(
   # grassland sub-types
   "mosaicgrasslanddominated" = list( name = "Mosaic grasslands (grass dom.)", level = "Subcategory", type = "Grassland"),
   "mosaicwoodydominated" = list( name = "Mosaic grasslands (woody dom.)", level = "Subcategory", type = "Grassland"),
-  "puregrassland" = list( name = "Pure grasslands", level = "Subcategory", type = "Grassland"),
+  "puregrassland" = list( name = "Grassland", level = "Subcategory", type = "NCV"),
   "mosaicgrassland" = list( name = "Grassland mosaics", level = "Subcategory", type = "Grassland"),
   
-  # ncv subtypes
+  # woody ncv sub-types
   "sparse" = list( name = "Sparse vegetation", level = "Subcategory", type = "NCV"),
   "shrubland" = list( name = "Shrubland", level = "Subcategory", type = "NCV"),
   "naturalmosaics" = list( name = "Natural mosaics", level = "Subcategory", type = "NCV"),
-  "grassland" = list( name = "Grassland", level = "Subcategory", type = "NCV"),
   "woodland" = list( name = "Woodland", level = "Subcategory", type = "NCV")
 )
 
 
 
 version_label <- "v2.0"
-base_dir <- here("external_files", "gridded_9km")
-input_dir <- file.path(base_dir, "FireCCI51")
-results_dir <- here("results/Burnt_Fraction_per_LCC")
-pub_results_dir <- here("publication_results/manuscript_BASE_v1.0")
+input_dir <- here("bf_per_lct/BASE_v1.0/")
+results_dir <- here("plots/BASE_v1.0/Burnt_Fraction_per_LCC")
+pub_results_dir <- here("plots", "BASE_v1.0", "manuscript")
 dir.create(results_dir, showWarnings = FALSE, recursive = TRUE)
 dir.create(pub_results_dir, showWarnings = FALSE, recursive = TRUE)
 
 
 # read file for FireEUrisk countries only
-refgrid_rast <- rast("/storage/shared/FirEUrisk/Gridded_9km/LandUse/Lu_6bands_Refgrid.nc")
+refgrid_rast <- rast(here("external_files/links/gridded_9km/LandUse/Lu_6bands_Refgrid.nc"))
 
 # first get a list of all the gridcell
 refgrid_dt <- as.data.table(refgrid_rast[[1]], xy = TRUE)
@@ -185,7 +183,7 @@ ba_histo <- ba_histo + theme(text = element_text(size = theme_get()$text$size * 
 if(dev_plots) magicPlot(p = ba_histo, filename = file.path(results_dir, "All_BurntAreas_histo"), width = 1400, height = 900)
 print(ba_histo)
 
-positions <- c("Total", "All croplands", "Herb. croplands", "Mosaic croplands", "Woody croplands", "NCV", "Woodlands", "Natural mosaics", "Grasslands", "Shrublands", "Sparse vegetation")
+positions <- c("Total", "All croplands", "Herb. croplands", "Mosaic croplands", "Woody croplands", "NCV", "Woodland", "Natural mosaics", "Grassland", "Shrubland", "Sparse vegetation")
 ba_histo <- ba_histo + scale_x_discrete(limits = positions)
 ba_histo <- ba_histo + scale_alpha_manual(values = c("Total" = 1, "Category" = 1, "Subcategory" = 0.5),
                                           guide="none")
@@ -232,10 +230,10 @@ all_groups <- list(
                                              "NCV")),
   
   list(name = "Supp Figures NCV", subclasses = c("NCV",
-                                                 "Woodlands",
+                                                 "Woodland",
                                                  "Natural mosaics", 
-                                                 "Grasslands", 
-                                                 "Shrublands", 
+                                                 "Grassland", 
+                                                 "Shrubland", 
                                                  "Sparse vegetation"))
   
   

@@ -41,7 +41,7 @@ months <- c(paste0(0,1:9), "10", "11", "12" )
 all_LC_classes <- list(
   
   #### First the essential ones for the main BASE fitting
-  
+
   # Non-cropland vegetation (NCV)
   NCV = list(name = "NCV", subclasses = c(50, # broadleaved evergreen tree
                                           60, 61, 62, # broadleaved deciduous tree
@@ -55,16 +55,16 @@ all_LC_classes <- list(
                                           140, # lichens and mosses
                                           150, 151, 152, 153,  # sparse vegetation
                                           160, 170, 180)), # flooded vegetation types
-  
+
   # Herbaceous ("pure") croplands
   PureCropland = list(name = "PureCropland", subclasses = c(10, 11, # non-woody rainfed crops
                                                              20)), # crops (irrigated/post flooding),
-  
+
   # Everything non-burnable (ie fragmentors)
   NonFlammable = list(name = "NonFlammable", subclasses = c(200, 201, 202, # bare areas
                                                             210, # water bodies
                                                             220)), # permanent snow and ice
-  
+
   #### Other natural subtypes
 
   # Woodlands and Shrublands (WaS) - AKA - "Natural"
@@ -77,17 +77,17 @@ all_LC_classes <- list(
                                           140, # lichens and mosses
                                           150, 151, 152, 153,  # sparse vegetation
                                           160, 170, 180)), # flooded vegetation types
-  
+
   # Woodlands
   Woodland = list(name = "Woodland", subclasses = c(50, # broadleaved evergreen tree
                                                       60, 61, 62, # broadleaved deciduous tree
                                                       70, 71, 72, # needleaved evergreen tree
                                                       80, 81, 82, # needleaved deciduous tree
                                                       90)), # mixed leaftype tree
-  
+
   # Shrublands
   Shrubland= list(name = "Shrubland", subclasses =c(120, 121, 122)), #  shrublands
-  
+
   # All grassland including mosaics
   AllGrassland = list(name = "AllGrassland", subclasses =c(100, 110, 130)), # grassland and mosaic herbaceous-woody
 
@@ -100,32 +100,32 @@ all_LC_classes <- list(
   # Mosaics grassland
   MosaicWoodyDominated= list(name = "MosaicWoodyDominated", subclasses =c(100)), #  woody dominated mosiac
 
-   # Natural mosaics 
+   # Natural mosaics
   NaturalMosaics= list(name = "NaturalMosaics", subclasses =c(100, 110)), #  both woody and grass dominated mosaics
-  
+
   # Sparse vegetation types
   Sparse = list(name = "Sparse", subclasses = c(150, 151, 152, 153)), # sparse vegetation
 
-  
+
   ####  Other cropland types
-  
+
   # Fully inclusive cropland
   Cropland = list(name = "Cropland", subclasses =c(10, 11, 12, # rainfed crops
                                                    20, # crops (irrigated/post flooding)
                                                    30, 40)), # crop/natural mosaics
-  
+
   # Mosiacs only
   MosaicCropland = list(name = "MosaicCropland", subclasses = c(30, 40)), # crop/natural mosaics
-  
+
   # Woody only
   WoodyCropland = list(name = "WoodyCropland", subclasses = c(12)), # woody
 
-  
+
   ### Other types
-  
+
   # Urban
   Urban = list(name = "Urban", subclasses = c(190)),
-  
+
   # Everything burnable
   All = list(name = "All", subclasses = c(10, 11, 12, # rainfed crops
                                           20, # crops (irrigated/post flooding)
@@ -197,7 +197,7 @@ for(this_LC_class in all_LC_classes) {
     # read each month o LC_classified burnt pixels
     for(month in months) {
       
-      message(paste("*******", month, "*******" ))
+      message(paste0("******* ",this_LC_class$name,": ",year,"-",month," *******" ))
       
       # read this month
       this_filename <- file.path(fire_dir, year,  paste0(year, month,"01-ESACCI-L3S_FIRE-BA-MODIS-AREA_", firecci_area ,"-fv5.1-LC.tif"))
@@ -212,7 +212,7 @@ for(this_LC_class in all_LC_classes) {
       # sum burnt pixels
       tic()
       this_fire_FirEUrisk_sum <- resample(this_fire_rast_reclass, target_grid, method = "sum", threads = TRUE) # reclassifying land cover data
-      message("Resamples (sum) this months to FirEUrisk grid")
+      message("Resampled (sum) this months to FirEUrisk grid")
       toc()
       
       # divide pixel counts to get burnt fraction of landcover type

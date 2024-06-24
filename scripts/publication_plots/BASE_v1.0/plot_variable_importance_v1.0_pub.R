@@ -1,4 +1,4 @@
-# NOTE: For this script we are reading a table of the SHAP-derived variable important valuesthat we saved when we fitted the model.
+# NOTE: For this script we are reading a table of the SHAP-derived variable important values that we saved when we fitted the model.
 # This is because the vi() function used to get the variable importance doesn't seem to work well if it the fitted model object is 
 # no longer in it's original environment
 
@@ -10,13 +10,13 @@ library(here)
 source(here("scripts", "plot_utils.R"))
 
 
-text.multiplier <- 2.3
+# text.multiplier <- 2.3
 
-prefix_string <- "BASE_v1.0"
+analysis_version <- "BASE_v1.0"
 
 #  Directories for reading data and saving plots
-pub_results_dir <- here("publication_results/manuscript_BASE_v1.0")
-models_dir <- here("results", "GLMs",  prefix_string)
+pub_results_dir <- here("plots", analysis_version, "manuscript")
+models_dir <- here("fitted_models", analysis_version, "GLMs")
 
 
 #### DEFINE BASELINES ####
@@ -53,8 +53,7 @@ for(this_baseline in baselines_list) {
   #### READ AND PLOT THE SHAP STATS ####
   shap_df <- read.table(file.path(models_dir, paste("BurntFraction", this_baseline$name, sep = "_"),  this_baseline$baseline_model_id,  "shap_values.txt"),
                            header = TRUE, stringsAsFactors = TRUE)
-  
-  shap_df <- data.frame(`Predictor` = factor(shap_df$Predictor, rev(shap_df$Predictor), ordered = TRUE), Importance = shap_df$Importance)
+  shap_df <- data.frame(Predictor = factor(shap_df$Predictor, shap_df$Predictor, ordered = TRUE), Importance = shap_df$Importance)
   
   # Make the plot
   shap_plot <- ggplot(data = shap_df) 

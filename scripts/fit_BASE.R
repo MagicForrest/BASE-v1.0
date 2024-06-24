@@ -1,29 +1,21 @@
 #### LOAD PACKAGES AND DEFINE RELATIVE PATHS ####
 
 if("DGVMTools" %in% (.packages())){  detach("package:DGVMTools", unload=TRUE) }
-library(mgcv)
-library(mgcViz)
-library(ggeffects)
-library(voxel)
-library(GGally)
-library(corrplot)
 library(DGVMTools)
-library(raster)
+
+library(mgcv)
 library(viridis)
-library(caret)
 library(tictoc)
 library(rnaturalearth)
-library(stars)
 library(viridis)
-library(ggfortify)
-library(car)
-library(sjPlot)
+library(car) # for variable inflation factor
+library(fastshap)
 library(vip)
 library(ggcorrplot)
-library(MuMIn)
-
 library(visreg)
+library(hexbin)
 library(ggpubr)
+library(sf)
 
 
 # define root path with here package and 
@@ -34,7 +26,7 @@ source(here("scripts", "plot_utils.R"))
 source(here("scripts", "plot_helper_functions.R"))
 
 # input data directory containing large data.tables already constructed with script 
-data_dir <- here("external_files/input_datatables/")
+data_dir <- here("data_tables")
 
 
 #### USER SETTINGS ####
@@ -46,10 +38,13 @@ num_threads <- 48
 # wether to plot the predictor terms (can sometimes be slow)
 plot_terms <- TRUE
 
-# data to use
-data_version <- "v1.01_publication_with_Kummu_GDP"
+# main analysis version
+analysis_version <- "BASE_v1.0"
 
-# version
+# data to use
+data_version <- "BASE_v1.0_publication"
+
+# fit version
 fit_batch_version <- "BASE_v1.0"
 
 #
@@ -97,23 +92,18 @@ lcc_colours <- c("PureCropland" = "orchid4", "NCV" ="springgreen4")
 #### SPECIFY MODELS TO FIT ####
 source(here("scripts/v1.0_sensitivity_models.R"))
 #model_specifications_list <- c(final_v1.0_models(), all_ncv_sensitivity_models(), all_cropland_sensitivity_models())
-model_specifications_list <- c(final_v1.0_models(), all_cropland_sensitivity_models())
+#model_specifications_list <- c(final_v1.0_models())
+model_specifications_list <- c(all_ncv_sensitivity_models(), all_cropland_sensitivity_models())
 
 
-
-#model_specifications_list <- all_ncv_sensitivity_models()
-#model_specifications_list <- all_cropland_sensitivity_models()
-#model_specifications_list <- all_cropland_sensitivity_models_no_interaction()
-#model_specifications_list <- final_v1.0_models()
 
 
 #### DEFINE DIRECTORIES
 
-# define paths for output (results and intermediate data)
-top.results.dir <- here("results", "GLMs")
-dir.create(top.results.dir, showWarnings = FALSE, recursive = TRUE)
-top.intermediates.dir <- here("intermediates", "GLMs")
-dir.create(top.intermediates.dir, showWarnings = FALSE, recursive = TRUE)
+# define paths for output 
+top.output.dir <- here("fitted_models", analysis_version, "GLMs")
+dir.create(top.output.dir, showWarnings = FALSE, recursive = TRUE)
+
 
 # minimum data points
 MIN_DATA_POINTS <- 100
@@ -196,7 +186,10 @@ sf::sf_use_s2(FALSE)
 
 
 #### READ DATA.TABLE AND PREPARE ####
-master_dt <- readRDS(file.path(data_dir, paste0("master_full_dt_", data_version, ".rds")))
+tic()
+master_dt <- readRDS(file.path(data_dir, analysis_version, paste0("master_full_dt_", data_version, ".rds")))
+message("Read full master data.table")
+toc()
 
 # some data prep
 master_dt[ , Pop_dens := sqrt(Pop_dens)]
@@ -276,13 +269,11 @@ for(model_spec in model_specifications_list) {
   
   
   # analysis and plot directories and text info
-  plot.dir <- file.path(top.results.dir,  fit_batch_version, dependent_var, version_id)
-  dir.create(plot.dir, showWarnings = FALSE, recursive = TRUE)
-  dir.create(file.path(plot.dir, "GLM"), showWarnings = FALSE, recursive = TRUE)
-  dir.create(file.path(plot.dir, "Scaled"), showWarnings = FALSE, recursive = TRUE)
-  intermediates.dir <- file.path(top.intermediates.dir,  fit_batch_version, dependent_var, version_id)
-  dir.create(intermediates.dir, showWarnings = FALSE, recursive = TRUE)
-  summary_line_filename <- file.path(plot.dir, "metrics.txt")
+  output.dir <- file.path(top.output.dir, dependent_var, fit_batch_version, version_id)
+  dir.create(output.dir, showWarnings = FALSE, recursive = TRUE)
+  dir.create(file.path(output.dir, "GLM"), showWarnings = FALSE, recursive = TRUE)
+  dir.create(file.path(output.dir, "Scaled"), showWarnings = FALSE, recursive = TRUE)
+  summary_line_filename <- file.path(output.dir, "metrics.txt")
   summary_metrics[["Model"]] <- version_id
   summary_metrics[["Description"]] <- description
   
@@ -295,7 +286,7 @@ for(model_spec in model_specifications_list) {
   else {
     
     # start the log file
-    this_model_textfile <- file(file.path(plot.dir, "log.txt"), open = "wt")
+    this_model_textfile <- file(file.path(output.dir, "log.txt"), open = "wt")
     writeLines(paste("Input data version:", data_version), this_model_textfile)
     
     # get predictor vars for subsetting the data.table (splitting the interaction terms to their components where necessary)
@@ -396,7 +387,7 @@ for(model_spec in model_specifications_list) {
                                       lab_size = 8,
                                       tl.cex = 24,
                                       show.legend = FALSE)
-      magicPlot(p = pearsons_corrplot, filename = file.path(plot.dir, paste("PearsonsCorrelation", sep = "_")), height = 800, width =800)
+      magicPlot(p = pearsons_corrplot, filename = file.path(output.dir, paste("PearsonsCorrelation", sep = "_")), height = 800, width =800)
       #print(pearsons_corrplot)
       
       
@@ -508,7 +499,7 @@ for(model_spec in model_specifications_list) {
       library(broom)
       this_m_table <- tidy(this_m)
       print(this_m_table)
-      write.table(this_m_table, file = file.path(plot.dir, "coeffs_table.txt"), row.names = FALSE)
+      write.table(this_m_table, file = file.path(output.dir, "coeffs_table.txt"), row.names = FALSE)
       
       print(" ** Calculating AIC and QAIC...")
       
@@ -539,12 +530,13 @@ for(model_spec in model_specifications_list) {
       print(" ** Calculating SHAP values...")
       if(isTRUE(model_spec$do_shap)) {
         tic()
-        vi_by_shap <- vi(this_m, method = "shap",
+        vi_by_shap <- vi(this_m, 
+                         method = "shap",
+                         train = fitting_dt,
                          pred_wrapper = predict)
         
-        # build the dataframe (notice the reversing of factors so that it plots in the right order)
-        predictor_names <- attr(vi_by_shap$Importance, "names")
-        shap_df <- data.frame(`Predictor` = factor(predictor_names, rev(predictor_names), ordered = TRUE), Importance = rev(vi_by_shap))
+        # make into an ordered factor for plotting (notice the reversing of factors so that it plots in the right order)
+        shap_df <- data.frame(Predictor = factor(rev(vi_by_shap$Variable), rev(vi_by_shap$Variable), ordered = TRUE), Importance = rev(vi_by_shap$Importance))
         
         # Make the plot
         shap_plot <- ggplot(data = shap_df) 
@@ -557,8 +549,8 @@ for(model_spec in model_specifications_list) {
         
         # print and save the plots and SHAP values
         print(shap_plot)
-        magicPlot(p = shap_plot, filename = file.path(plot.dir, paste("SHAP_Values")), height = 1200, width =1200)
-        write.table(x = shap_df, file =  file.path(plot.dir, paste("shap_values.txt")), row.names = FALSE)
+        magicPlot(p = shap_plot, filename = file.path(output.dir, paste("SHAP_Values")), height = 1200, width =1200)
+        write.table(x = shap_df, file =  file.path(output.dir, paste("shap_values.txt")), row.names = FALSE)
         print(" ** Done.")
         toc()
         
@@ -669,14 +661,14 @@ for(model_spec in model_specifications_list) {
       }
       
       
-      # save the GLM and the data to the intermediates directory
+      # save the GLM and the data to the output directory
       print(" ** Saving model")
       tic()
-      saveRDS(object = this_m, file = file.path(intermediates.dir, paste("GLM", version_id, "rds", sep = ".")))
+      saveRDS(object = this_m, file = file.path(output.dir, paste("GLM", version_id, "rds", sep = ".")))
       toc()
       print(" ** Saving results data.frame")
       tic()
-      saveRDS(object = predicted_dt, file = file.path(intermediates.dir, paste("DT", version_id, "rds", sep = ".")))
+      saveRDS(object = predicted_dt, file = file.path(output.dir, paste("DT", version_id, "rds", sep = ".")))
       toc()
       
       
@@ -758,7 +750,7 @@ for(model_spec in model_specifications_list) {
         all_single_ggplots_list[[this_var]] <- effect_plot
         
         # tweak and save individually
-        magicPlot(p = effect_plot, filename = file.path(plot.dir, paste("Predictor_Single_scaled", this_var, sep = "_")), height = 1300, width =1800)
+        magicPlot(p = effect_plot, filename = file.path(output.dir, paste("Predictor_Single_scaled", this_var, sep = "_")), height = 1300, width =1800)
         
       }
       
@@ -783,7 +775,7 @@ for(model_spec in model_specifications_list) {
           interaction_plot <- interaction_plot+ scale_fill_viridis(name = paste0("f(", these_vars[1], ",", these_vars[2], ")" ))
           all_interaction_ggplots_list[[this_interaction]] <- interaction_plot
           interaction_plot <- interaction_plot + labs(caption = caption_text)
-          magicPlot(p = interaction_plot, filename = file.path(plot.dir, paste("Predictor_Interaction_scaled", paste0(these_vars[1], "x", these_vars[2]), sep = "_")), height = 1300, width =1800)
+          magicPlot(p = interaction_plot, filename = file.path(output.dir, paste("Predictor_Interaction_scaled", paste0(these_vars[1], "x", these_vars[2]), sep = "_")), height = 1300, width =1800)
         }
         
       }
@@ -791,11 +783,11 @@ for(model_spec in model_specifications_list) {
       #### ARRANGE THE PREDICTOR PLOTS ####
       if(length(all_single_ggplots_list) > 0) {
         all_single_predictors_plot <- ggarrange(plotlist = all_single_ggplots_list, common.legend = TRUE, legend = "right")
-        magicPlot(p = all_single_predictors_plot, filename = file.path(plot.dir, "All_Single_Predictors"), height = 1400, width = 1600)
+        magicPlot(p = all_single_predictors_plot, filename = file.path(output.dir, "All_Single_Predictors"), height = 1400, width = 1600)
       }
       if(length(all_interaction_ggplots_list) > 0) {
         all_interactions_plot <- ggarrange(plotlist = all_interaction_ggplots_list, common.legend = TRUE, legend = "right")
-        magicPlot(p = all_interactions_plot, filename = file.path(plot.dir, "All_Interacting_Predictors"), height = 1400, width = 1600)
+        magicPlot(p = all_interactions_plot, filename = file.path(output.dir, "All_Interacting_Predictors"), height = 1400, width = 1600)
       }
       
       
@@ -855,7 +847,7 @@ for(model_spec in model_specifications_list) {
                                                                                            fill = "transparent", 
                                                                                            linewidth = 0.1,
                                                                                            colour= "black")
-                magicPlot(p = this_prediction_plot, filename = file.path(plot.dir, scaled_or_unscaled, paste("MonthlyPrediction",  paste0("Burnt", this_var$name),  paste(this_month, month_labels[this_month], sep = "-"), sep = "_")), height = 900, width =1300)
+                magicPlot(p = this_prediction_plot, filename = file.path(output.dir, scaled_or_unscaled, paste("MonthlyPrediction",  paste0("Burnt", this_var$name),  paste(this_month, month_labels[this_month], sep = "-"), sep = "_")), height = 900, width =1300)
               })
             }
           }
@@ -896,7 +888,7 @@ for(model_spec in model_specifications_list) {
                                                                                        fill = "transparent", 
                                                                                        linewidth = 0.1,
                                                                                        colour= "black")
-            magicPlot(p = this_prediction_plot, filename = file.path(plot.dir, scaled_or_unscaled, paste("AnnualPrediction",  paste0("Burnt", this_var$name), sep = "_")), height = 900, width =1300)
+            magicPlot(p = this_prediction_plot, filename = file.path(output.dir, scaled_or_unscaled, paste("AnnualPrediction",  paste0("Burnt", this_var$name), sep = "_")), height = 900, width =1300)
             
           }
           
@@ -936,7 +928,7 @@ for(model_spec in model_specifications_list) {
           this_prediction_ts_plot <- this_prediction_ts_plot + scale_linetype_manual(values = c("solid", "solid"), labels = c("FireCCI51", "BASE"))
           
           
-          magicPlot(p = this_prediction_ts_plot, filename = file.path(plot.dir, scaled_or_unscaled, paste("SeasonalPrediction", sep = "_")), height = 1000, width =1500)
+          magicPlot(p = this_prediction_ts_plot, filename = file.path(output.dir, scaled_or_unscaled, paste("SeasonalPrediction", sep = "_")), height = 1000, width =1500)
           
           
           
@@ -962,7 +954,7 @@ for(model_spec in model_specifications_list) {
           predicted_dt_yearly_melted <- melt(predicted_dt_yearly, id.vars = c("Year"), variable.name = "Type", value.name = "Burnt_area")
           iav_plot <- IAVPlot(predicted_dt_yearly, #linewidths = c(2,2), linetypes = c("solid", "solid"),
                               text.multiplier = text.multiplier,
-                              filename = file.path(plot.dir, scaled_or_unscaled, paste("YearlyTSPrediction", sep = "_")), width = 1400, height = 900)
+                              filename = file.path(output.dir, scaled_or_unscaled, paste("YearlyTSPrediction", sep = "_")), width = 1400, height = 900)
           iav_plot <- iav_plot + scale_color_viridis_d(labels = c("FireCCI51", "BASE"), option = "viridis")
           iav_plot <- iav_plot + scale_linewidth_manual(values = c(2,2), labels = c("FireCCI51", "BASE"))
           iav_plot <- iav_plot + scale_linetype_manual(values = c("solid", "solid"), labels = c("FireCCI51", "BASE"))
@@ -971,7 +963,7 @@ for(model_spec in model_specifications_list) {
           iav_plot <- iav_plot + labs(title = paste("Burnt Area in landcover:", landcover),
                                       caption = caption_text,
                                       y = "Burnt area (ha)")
-          magicPlot(p = iav_plot, filename = file.path(plot.dir, scaled_or_unscaled, paste("YearlyTSPrediction", sep = "_")), width = 1400, height =900)
+          magicPlot(p = iav_plot, filename = file.path(output.dir, scaled_or_unscaled, paste("YearlyTSPrediction", sep = "_")), width = 1400, height =900)
           
           
           iav_NME <- calcNME(predicted_dt_yearly, predicted_dt_yearly_melted[Type == "Predicted_burnt_area", Burnt_area])

@@ -11,15 +11,8 @@
 /external_files/links/
 /plots/*/
 /bf_per_lct/*/
-results
-intermediates
-temp
-publication_results
-/fitted_models/GLMs
-
-publication_results-bup/
-results-bup/
-
+/data_tables/*/
+/fitted_models/*/
 
 # emacs back-ups
 *~

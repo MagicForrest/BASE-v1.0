@@ -6,21 +6,19 @@ here::i_am("scripts/publication_plots/BASE_v1.0/plot_correlations_v1.0_pub.R")
 library(here)
 source(here("scripts", "plot_utils.R"))
 
-min_landcover_frac <- 0.15
+min_landcover_frac <- 0.1
 
 prefix_string <- "BASE_v1.0"
 
 text_multiplier_pdf <- 1.2
 
 #  Directories for reading data and saving plots
-pub_results_dir <- here("publication_results/manuscript_BASE_v1.0")
-intermediates_dir <- here("intermediates", "GLMs",  prefix_string)
-models_dir <- here("results", "GLMs",  prefix_string)
+plot_dir <- here("plots/BASE_v1.0/manuscript/")
 
 # data to use
 # input data directory containing large data.tables already constructed with script 
-data_dir <- here("external_files/input_datatables/")
-data_version <- "v1.01_publication_with_Kummu_GDP"
+data_dir <- here("data_tables/BASE_v1.0")
+data_version <- "BASE_v1.0_publication"
 
 #### READ THE MASTER DATATABLE ####
 master_dt <- readRDS(file.path(data_dir, paste0("master_full_dt_", data_version, ".rds")))
@@ -58,8 +56,9 @@ for(this_lcc_class in baselines_list) {
   #all_predictors <- unique(all_predictors)
   all_predictors <- unique(unlist(strsplit(all_predictors, split = "*", fixed = TRUE)))
   
-  # add cropland fraction
-  if(this_lcc_class$name == "PureCropland") all_predictors <- append(all_predictors, "LandcoverFraction_PureCropland")
+  # add land cover fraction (for making threshold selection later)
+  all_predictors <- append(all_predictors, paste("LandcoverFraction", this_lcc_class$name, sep = "_"))
+
   
   # drop predictors that weren't included in the publication
   unused_predictors <- c("deltaNatural10", "deltaNatural20", "deltaNatural30", "deltaNatural40",  "MEPI_LPJmL",
@@ -70,20 +69,7 @@ for(this_lcc_class in baselines_list) {
   
   # calculate extra ones
   if("MEPI" %in% all_predictors) master_dt[ , MEPI := GPP/Max_GPP13]
-  if("MEPI2" %in% all_predictors) master_dt[ , MEPI2 := ((GPP+GPP1)/2) /Max_GPP13]
-  if("MEPI_LPJmL" %in% all_predictors) master_dt[ , MEPI_LPJmL := GPP_LPJmL/Max_GPP_LPJmL13]
-  if("GPP3_index" %in% all_predictors) master_dt[ , GPP3_index := (GPP3/3)/Max_GPP13]
-  if("GPP4_index" %in% all_predictors) master_dt[ , GPP4_index := (GPP4/4)/Max_GPP13]
-  if("GPP5_index" %in% all_predictors) master_dt[ , GPP5_index := (GPP5/5)/Max_GPP13]
-  if("GPP6_index" %in% all_predictors) master_dt[ , GPP6_index := (GPP6/6)/Max_GPP13]
-  if("GPP3_2_index" %in% all_predictors) master_dt[ , GPP3_2_index := (GPP3_2/3)/Max_GPP13]
-  if("GPP4_2_index" %in% all_predictors) master_dt[ , GPP4_2_index := (GPP4_2/4)/Max_GPP13]
-  if("GPP5_2_index" %in% all_predictors) master_dt[ , GPP5_2_index := (GPP5_2/5)/Max_GPP13]
-  if("GPP6_2_index" %in% all_predictors) master_dt[ , GPP6_2_index := (GPP6_2/6)/Max_GPP13]
-  if("FAPAR_index" %in% all_predictors) master_dt[ , FAPAR_index := FAPAR/Max_FAPAR13]
-  if("Crop_ratio" %in% all_predictors) master_dt[ , Crop_ratio := LandcoverFraction_PureCropland/LandcoverFraction_NCV]
   if("PHI" %in% all_predictors) master_dt[ , PHI := (GPP3/3)/Max_GPP13]
-  
   
   # do transforms (log)
   for(this_predictor in all_predictors){
@@ -97,10 +83,8 @@ for(this_lcc_class in baselines_list) {
   this_dt <- master_dt[ , ..all_predictors]
   
   # select only the gridcells across the land cover threshold
-  # if(landcover == "NCV") 
   this_dt <- this_dt[ get(paste("LandcoverFraction",  this_lcc_class$name, sep = "_")) > min_landcover_frac, ] 
-  # if(landcover == "PureCropland") master_dt <- master_dt[ LandcoverFraction_PureCropland > min_landcover_frac, ] 
-  
+
   # drop the land cover fractions because we don't use them in the final predictors
   this_dt[ , LandcoverFraction_NCV := NULL ]
   this_dt[ , LandcoverFraction_PureCropland := NULL ]
@@ -144,7 +128,7 @@ figb1_png <- ggarrange(plotlist = all_corrplots_png,
                    align = "hv"
 )
 
-magicPlot(p = figb1_png, filename = file.path(pub_results_dir, paste("Figure_B01_Predictor_Correlation")), width= 1000, height  = 1800)
+magicPlot(p = figb1_png, filename = file.path(plot_dir, paste("Figure_B01_Predictor_Correlation")), width= 1000, height  = 1800)
 
 figb1_pdf <- ggarrange(plotlist = all_corrplots_pdf,
                        ncol = 1,
@@ -154,11 +138,11 @@ figb1_pdf <- ggarrange(plotlist = all_corrplots_pdf,
 )
 
 
-pdf(file = file.path(pub_results_dir, paste0("Figure_B01_Predictor_Correlation.pdf")), width = 10, height = 18)
+pdf(file = file.path(plot_dir, paste0("Figure_B01_Predictor_Correlation.pdf")), width = 10, height = 18)
 print(figb1_pdf)
 dev.off()
 
-pdf(file = file.path(pub_results_dir, paste0("fig_B01.pdf")), width = 10, height = 18)
+pdf(file = file.path(plot_dir, paste0("fig_B01.pdf")), width = 10, height = 18)
 print(figb1_pdf)
 dev.off()
 
