@@ -22,7 +22,7 @@ agg_method = "median"
 # define the models to plot
 ncv_model <- "BASE_v1.0"
 cropland_model <- "BASE_v1.0"
-prefix_string <- "BASE_v1.0"
+analysis_version <- "BASE_v1.0"
 
 
 # dataset names
@@ -37,17 +37,17 @@ text.multiplier <- 2.3
 npoints <- 1000
 
 #  Directories for reading data and saving plots
-pub_results_dir <- here("publication_results/manuscript_BASE_v1.0")
-intermediates_dir <- here("intermediates", "GLMs",  prefix_string)
+pub_results_dir <- here("plots/BASE_v1.0/manuscript/")
+models_dir <- here("fitted_models", analysis_version, "GLMs")
 
 
 #### READ DATA AND MODEL AND MAKE SOME TEMPLATES ####
 
 # read data.tables and set names
-ncv_dt <- readRDS(file.path(intermediates_dir, "BurntFraction_NCV",  ncv_model, paste("DT", ncv_model, "rds", sep = ".")))
-ncv_model <- readRDS(file.path(intermediates_dir, "BurntFraction_NCV",  ncv_model, paste("GLM", ncv_model, "rds", sep = ".")))
-cropland_dt <- readRDS(file.path(intermediates_dir, "BurntFraction_PureCropland",  cropland_model, paste("DT", cropland_model, "rds", sep = ".")))
-cropland_model <- readRDS(file.path(intermediates_dir, "BurntFraction_PureCropland",  cropland_model, paste("GLM", cropland_model, "rds", sep = ".")))
+ncv_dt <- readRDS(file.path(models_dir, "BurntFraction_NCV",  ncv_model, paste("DT", ncv_model, "rds", sep = ".")))
+ncv_model <- readRDS(file.path(models_dir, "BurntFraction_NCV",  ncv_model, paste("GLM", ncv_model, "rds", sep = ".")))
+cropland_dt <- readRDS(file.path(models_dir, "BurntFraction_PureCropland",  cropland_model, paste("DT", cropland_model, "rds", sep = ".")))
+cropland_model <- readRDS(file.path(models_dir, "BurntFraction_PureCropland",  cropland_model, paste("GLM", cropland_model, "rds", sep = ".")))
 setnames(ncv_dt, c("Observed_burnt_area", "Predicted_burnt_area_raw"), lcc_names) 
 setnames(cropland_dt, c("Observed_burnt_area", "Predicted_burnt_area_raw"), lcc_names) 
 

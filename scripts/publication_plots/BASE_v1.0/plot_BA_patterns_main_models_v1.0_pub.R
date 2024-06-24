@@ -14,7 +14,7 @@ source(here("scripts", "plot_helper_functions.R"))
 # define the models to plot
 ncv_model <- "BASE_v1.0"
 cropland_model <- "BASE_v1.0"
-prefix_string <- "BASE_v1.0"
+analysis_version <- "BASE_v1.0"
 
 # dataset names
 obs_name <- "FireCCI51"
@@ -29,15 +29,15 @@ text.multiplier <- 2.8
 
 
 #  Directories for reading data and saving plots
-pub_results_dir <- here("publication_results/manuscript_BASE_v1.0")
-intermediates_dir <- here("intermediates", "GLMs",  prefix_string)
+manuscript_fig_dir <- here("plots", analysis_version, "manuscript")
+models_dir <- here("fitted_models", analysis_version, "GLMs")
 
 
 #### READ AND PROCESS THE DATA ####
 
 # read data.tables and set names
-ncv_dt <- readRDS(file.path(intermediates_dir, "BurntFraction_NCV",  ncv_model, paste("DT", ncv_model, "rds", sep = ".")))
-cropland_dt <- readRDS(file.path(intermediates_dir, "BurntFraction_PureCropland",  cropland_model, paste("DT", cropland_model, "rds", sep = ".")))
+ncv_dt <- readRDS(file.path(models_dir, "BurntFraction_NCV",  ncv_model, paste("DT", ncv_model, "rds", sep = ".")))
+cropland_dt <- readRDS(file.path(models_dir, "BurntFraction_PureCropland",  cropland_model, paste("DT", cropland_model, "rds", sep = ".")))
 setnames(ncv_dt, c("Observed_burnt_area", "Predicted_burnt_area_raw"), lcc_names) 
 setnames(cropland_dt, c("Observed_burnt_area", "Predicted_burnt_area_raw"), lcc_names) 
 
@@ -80,13 +80,13 @@ spatial_plot <- spatial_plot + theme(text = element_text(size = theme_get()$text
                                      axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 print(spatial_plot)
 
-magicPlot(p = spatial_plot, filename = file.path(pub_results_dir, "Figure_04_Spatial_BA"), width = 1100, height = 1200, type = "png")
+magicPlot(p = spatial_plot, filename = file.path(manuscript_fig_dir, "Figure_04_Spatial_BA"), width = 1100, height = 1200, type = "png")
 
-pdf(file = file.path(pub_results_dir, paste0("Figure_04_Spatial_BA.pdf")), width = 11, height = 12)
+pdf(file = file.path(manuscript_fig_dir, paste0("Figure_04_Spatial_BA.pdf")), width = 11, height = 12)
 print(spatial_plot)
 dev.off()
 
-pdf(file = file.path(pub_results_dir, paste0("fig_04.pdf")), width = 11, height = 12)
+pdf(file = file.path(manuscript_fig_dir, paste0("fig_04.pdf")), width = 11, height = 12)
 print(spatial_plot)
 dev.off()
 
@@ -112,14 +112,14 @@ iav_plot <- iav_plot + scale_colour_manual(values = c("Cropland" = "orchid4",
 iav_plot <- iav_plot + labs(y = "Burnt area (Mha)")
 
 print(iav_plot)
-magicPlot(p = iav_plot, filename = file.path(pub_results_dir, "Figure_05_IAV_BA"), width = 1200, height = 1000)
+magicPlot(p = iav_plot, filename = file.path(manuscript_fig_dir, "Figure_05_IAV_BA"), width = 1200, height = 1000)
 
 plot_dim_units = "px"
-pdf(file = file.path(pub_results_dir, paste0("Figure_05_IAV_BA.pdf")), width = 12, height = 10)
+pdf(file = file.path(manuscript_fig_dir, paste0("Figure_05_IAV_BA.pdf")), width = 12, height = 10)
 print(iav_plot)
 dev.off()
 
-pdf(file = file.path(pub_results_dir, paste0("fig_05.pdf")), width = 12, height = 10)
+pdf(file = file.path(manuscript_fig_dir, paste0("fig_05.pdf")), width = 12, height = 10)
 print(iav_plot)
 dev.off()
 
@@ -144,13 +144,13 @@ seasonal_plot <- seasonal_plot + scale_colour_manual(values = c("Cropland" = "or
 seasonal_plot <- seasonal_plot + labs(y = "Burnt area (Mha)")
 
 print(seasonal_plot)
-magicPlot(p = seasonal_plot, filename = file.path(pub_results_dir, "Figure_06_Seasonal_BA"), width = 1200, height = 1000)
+magicPlot(p = seasonal_plot, filename = file.path(manuscript_fig_dir, "Figure_06_Seasonal_BA"), width = 1200, height = 1000)
 
-pdf(file = file.path(pub_results_dir, paste0("Figure_06_Seasonal_BA.pdf")), width = 12, height = 10)
+pdf(file = file.path(manuscript_fig_dir, paste0("Figure_06_Seasonal_BA.pdf")), width = 12, height = 10)
 print(seasonal_plot)
 dev.off()
 
-pdf(file = file.path(pub_results_dir, paste0("fig_06.pdf")), width = 12, height = 10)
+pdf(file = file.path(manuscript_fig_dir, paste0("fig_06.pdf")), width = 12, height = 10)
 print(seasonal_plot)
 dev.off()
 

@@ -12,15 +12,7 @@
 /plots/*/
 /bf_per_lct/*/
 /data_tables/*/
-results
-intermediates
-temp
-publication_results
-/fitted_models/GLMs
-
-publication_results-bup/
-results-bup/
-
+/fitted_models/*/
 
 # emacs back-ups
 *~

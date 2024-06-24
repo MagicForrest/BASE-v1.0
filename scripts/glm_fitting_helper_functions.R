@@ -266,8 +266,8 @@ plotSimpleTermVisReg <- function(this_visreg, var, model, interaction_terms = NU
 
   # plot the background as a heatmap 
   this_plot <- ggplot() + geom_hex(data = this_visreg$res, mapping = aes(x = .data[[this_visreg$meta$x]], y = visregRes), bins = 50)
-  this_plot <- this_plot + scale_fill_viridis(option = "F", direction = -1, tran = "log10")
-  
+  this_plot <- this_plot + scale_fill_viridis(option = "F", direction = -1, trans = "log10")
+
   # check for a fixed effect
   fixed_effect <- getFactorPredictorsFromModelObject(model)  
   if(length(fixed_effect) > 0) stop("This function can't currently plot fixed effects")

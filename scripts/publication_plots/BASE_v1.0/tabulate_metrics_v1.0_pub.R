@@ -16,8 +16,8 @@ source(here("scripts", "glm_fitting_helper_functions.R"))
 
 #### 
 target <- "BurntFraction"
-version <- "BASE_v1.0"
-plot_dir <- here("publication_results/manuscript_BASE_v1.0")
+analysis_version <- "BASE_v1.0"
+plot_dir <- here("plots", analysis_version, "manuscript")
 dir.create(plot_dir, recursive = TRUE, showWarnings = FALSE)
 
 # threshold
@@ -105,7 +105,7 @@ round_df <- function(x, digits) {
 for(lcc_type in all_model_types) {
   
   # directory where runs are stored
-  runs_dir <- here("results", "GLMs",  version, paste(target, lcc_type$name, sep = "_"))
+  runs_dir <- here("fitted_models",  analysis_version,  "GLMs", paste(target, lcc_type$name, sep = "_"))
   
   # build table and set names
   all_metrics_dt <- data.table()
