@@ -15,7 +15,7 @@ tic()
 #### SETTINGS ####
 
 analysis_version <- "BASE_v1.0" # used for directory
-analysis_subversion <- "publication_test" # used for filename
+analysis_subversion <- "publication_test_slim" # used for filename
 
 base_dir <- here("external_files", "links", "gridded_9km/")
 fwi_raw_dir <- here("external_files", "links", "daily_fwi/")
@@ -26,9 +26,6 @@ dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
 # flag to include long term means and deviations (currently not enabled becuase these weren't found to be useful) 
 if_add_long_terms_means_and_deviations <- FALSE
-
-# select which data sets to use
-doLFMC <- FALSE
 
 ref_grid_terra <- rast(file.path(base_dir, "FirEUrisk_ref_grid.nc"))
 ref_grid_dt <- as.data.frame(ref_grid_terra, xy = TRUE)
@@ -109,38 +106,6 @@ master_full_dt <- master_full_dt[ LandcoverFraction_NonFlammable < 0.99 | is.na(
 current_row_size <- nrow(master_full_dt)
 message(paste("Initial table size:", current_row_size))
 
-####
-
-
-
-#### FRY ####
-
-# read the FRY RDS (as already prepared by Maik)
-FRY_dt <- readRDS(file.path(base_dir, "FRY", "FRY_dt.rds"))
-FRY_dt <- FRY_dt[, c("Lon", "Lat", "Year", "Month", "N_patches_firecci_CUTOFF12", "N_patches_firecci_CUTOFF6", "N_patches_MODIS_CUTOFF12", "N_patches_MODIS_CUTOFF6")]
-FRY_dt[ , Lon := round(Lon, 7)]
-FRY_dt[ , Lat := round(Lat, 7)]
-FRY_dt[ , Month := as.integer(Month)]
-FRY_dt[ , Year := as.integer(Year)]
-
-# all years 
-FRY_dt_full <- FRY_dt[ ,  lapply(.SD, FUN=mean, na.rm = TRUE), by = c("Lon", "Lat", "Year", "Month")]
-master_full_dt <- merge.data.table(x = master_full_dt, y = FRY_dt_full, by = c("Lon", "Lat", "Year", "Month"), all.x = TRUE, all.y = FALSE)
-
-# aggregate to climatology of monthly values and merge
-FRY_dt <- FRY_dt[ ,  lapply(.SD, FUN=mean, na.rm = TRUE), by = c("Lon", "Lat", "Month")]
-FRY_dt[, Year := NULL]
-
-
-# Report and tidy up
-message(paste0("*** Completed FRY ***"))
-current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count = current_row_size)
-
-
-# special case for FRY - set NAs to zero 
-master_full_dt[is.na(master_full_dt)] <- 0
-
-
 
 #### LAND COVER ####
 
@@ -178,7 +143,6 @@ for(lu_band in 1:length(landuse_types)){
   
 }
 
-
 # Do a little extra with the land use
 
 # calculate Natural from Shrub and Forest and clean up the unneedded
@@ -186,16 +150,7 @@ lu_dt[ , Natural := Shrub + Forest]
 lu_dt[ , Shrub := NULL]
 lu_dt[ , Forest := NULL]
 
-# calculate the land abandoment (growth of Natural, over the last 40 years)
 setkey(lu_dt, Lon, Lat, Year)
-lu_dt[, Natural1 := data.table::shift(Natural, n=1), by=c("Lon", "Lat")]
-lu_dt[, NaturalChange := pmax(Natural - Natural1, 0)]
-lu_dt[, deltaNatural40 := data.table::frollsum(NaturalChange, align = "right", n = 40), by=c("Lon", "Lat")]
-lu_dt[, deltaNatural30 := data.table::frollsum(NaturalChange, align = "right", n = 30), by=c("Lon", "Lat")]
-lu_dt[, deltaNatural20 := data.table::frollsum(NaturalChange, align = "right", n = 20), by=c("Lon", "Lat")]
-lu_dt[, deltaNatural10 := data.table::frollsum(NaturalChange, align = "right", n = 10), by=c("Lon", "Lat")]
-lu_dt[, Natural1 := NULL]
-lu_dt[, NaturalChange := NULL]
 
 
 # round the table off to 7 decimal places
@@ -210,28 +165,6 @@ message(paste0("*** Completed Land use ***"))
 current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count = current_row_size)
 
 rm(this_lu_dt, this_lu_rast)
-
-#### AGB
-
-agb_terra <-  c(rast(file.path(base_dir, "Biomass", "ESACCI-BIOMASS-FirEUrisk-9km-2010-GridcellMean.nc")), rast(file.path(base_dir, "Biomass", "ESACCI-BIOMASS-FirEUrisk-9km-2010-Natural_via_CCI_Landcover_300m_grid.nc")))
-names(agb_terra) <- c("AGB_Gridcell", "AGB_Natural")
-
-agb_terra <- resample(agb_terra, ref_grid_terra)
-agb_dt <- as.data.table(as.data.frame(agb_terra, xy = TRUE))
-setnames(agb_dt, c("x", "y"), c("Lon", "Lat"))
-
-# round the table off to 7 decimal places
-agb_dt[ , Lon := round(Lon, 7)]
-agb_dt[ , Lat := round(Lat, 7)]
-
-# add full data
-master_full_dt <- merge.data.table(x = master_full_dt, y = agb_dt, by = c("Lon", "Lat"))
-
-# Report and tidy up
-message(paste0("*** Completed tree cover ***"))
-current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count = current_row_size)
-
-rm(agb_dt, agb_terra)
 
 
 #### Landsat Tree Cover ####
@@ -261,7 +194,7 @@ treecover_dt[ , Lat := round(Lat, 7)]
 master_full_dt <- merge.data.table(x = master_full_dt, y = treecover_dt, by = c("Lon", "Lat"))
 
 # Report and tidy up
-message(paste0("*** Completed AGB ***"))
+message(paste0("*** Completed tree cover ***"))
 current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count = current_row_size)
 
 rm(treecover_dt, treecover_dt)
@@ -395,10 +328,6 @@ gs_dt <- temp_dt[ Temp > 5, ]
 gs_dt[ , Temp := NULL]
 
 
-# checks
-#gs_dt_count <- gs_dt[, .(count = .N), by = c("Lon", "Lat")]
-#ggplot(gs_dt_count) + geom_raster(aes(x = Lon, y = Lat, fill = count))
-
 #### ADD CLIMATE LONG TERM MEANS AND DEVIATIONS ####
 # Extract the precip, temperature and solar radiation and calclulate the some rolling means and long term deviations etc
 
@@ -482,27 +411,6 @@ message(paste0("*** Completed FAPAR ***"))
 current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count = current_row_size)
 rm(FAPAR_dt, FAPAR_terra)
 
-#### FUEL TYPES (static map of dominant class) #### 
-
-# fractional covers - not yet used
-#Fuel_types_terra <- rast(file.path(base_dir, "FuelTypes", "FirEUrisk_Europe_fuel_map_9km_fc.tif"))
-
-# dominant class
-Fuel_types_terra <- rast(file.path(base_dir, "FuelTypes", "FirEUrisk_Europe_fuel_map_9km.tif"))
-Fuel_types_terra <- mask(Fuel_types_terra, ref_grid_terra)
-Fuel_types_dt <- as.data.table(as.data.frame(Fuel_types_terra, xy = TRUE))
-setnames(Fuel_types_dt, c("Lon", "Lat", "FuelClass"))
-
-Fuel_types_dt[ , Lon := round(Lon, 7)]
-Fuel_types_dt[ , Lat := round(Lat, 7)]
-
-master_full_dt <- merge.data.table(master_full_dt, Fuel_types_dt, by = c("Lon", "Lat"))
-
-# Report and tidy up
-message(paste0("*** Completed fuel types ***"))
-current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count = current_row_size)
-rm(Fuel_types_terra)
-
 
 #### SPECIES TYPES
 
@@ -530,32 +438,10 @@ current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count
 rm(Fuel_types_terra)
 
 
-#### SOCIOECONOMICS ####
 
-GDP_terra <- rast(file.path(base_dir, "SocioEconomic", "GDP_2005_FirEURisk_Grid.nc"))
-GDP_terra <- mask(GDP_terra, ref_grid_terra)
-GDP_terra <- resample(GDP_terra, ref_grid_terra)
-GDP_dt <- as.data.table(as.data.frame(GDP_terra, xy = TRUE))
-setnames(GDP_dt, c("Lon", "Lat", "GDP_gridcell_Wang"))
-rm(GDP_terra)
+#### POPULATION DENSITY ####
 
-RoadDens_terra <- rast(file.path(base_dir, "SocioEconomic", "RD_DENS_GRIP4_FirEURisk_Grid_2018.nc"))
-RoadDens_terra <- mask(RoadDens_terra, ref_grid_terra)
-RoadDens_terra <- resample(RoadDens_terra, ref_grid_terra)
-RoadDens_dt <- as.data.table(as.data.frame(RoadDens_terra, xy = TRUE))
-setnames(RoadDens_dt, c("Lon", "Lat", "Road_dens"))
-socioeconomic_dt <- merge.data.table(GDP_dt, RoadDens_dt, by = c("Lon", "Lat"))
-rm(RoadDens_terra)
-
-PopDens_terra <- rast(file.path(base_dir, "SocioEconomic", "POPDENSITY_SSP1_2020.FirEURisk.nc"))
-PopDens_terra <- mask(PopDens_terra, ref_grid_terra)
-PopDens_terra <- resample(PopDens_terra, ref_grid_terra)
-PopDens_dt <- as.data.table(as.data.frame(PopDens_terra, xy = TRUE))
-setnames(PopDens_dt, c("Lon", "Lat", "Pop_dens_static"))
-socioeconomic_dt <- merge.data.table(socioeconomic_dt, PopDens_dt, by = c("Lon", "Lat"))
-rm(PopDens_terra)
-
-# update time evolving pop dens
+# time evolving pop dens
 current_years <- range(unique(master_full_dt[["Year"]]))
 
 Pop_dens_dt <- data.table()
@@ -570,11 +456,6 @@ for(this_year in current_years[1]:current_years[2]){
   rm(Pop_dens_dt_temp) 
 }
 
-
-socioeconomic_dt[ , Lon := round(Lon, 7)]
-socioeconomic_dt[ , Lat := round(Lat, 7)]
-master_full_dt <- merge.data.table(master_full_dt, socioeconomic_dt, by = c("Lon", "Lat"))
-
 Pop_dens_dt[ , Lon := round(Lon, 7)]
 Pop_dens_dt[ , Lat := round(Lat, 7)]
 master_full_dt <- merge.data.table(master_full_dt, Pop_dens_dt, by = c("Lon", "Lat", "Year"))
@@ -582,7 +463,10 @@ master_full_dt <- merge.data.table(master_full_dt, Pop_dens_dt, by = c("Lon", "L
 # Report and tidy up
 message(paste0("*** Completed Socioeconomic***"))
 current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count = current_row_size)
-rm(socioeconomic_dt, GDP_dt, RoadDens_dt, PopDens_dt)
+rm(socioeconomic_dt, PopDens_dt)
+
+
+
 
 #### KUMMU HDI & GDP ####
 
@@ -689,50 +573,6 @@ message(paste0("*** Completed GPP ***"))
 current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count = current_row_size)
 rm(GPP_dt, GPP_terra)
 
-
-#### GPP LPJmL ####
-
-GPP_LPJmL_terra <- rast(file.path(base_dir, "GPP_LPJml", "mgpp.nc"))
-GPP_LPJmL_terra <- resample(GPP_LPJmL_terra, ref_grid_terra)
-GPP_LPJmL_dt <- as.data.table(as.data.frame(GPP_LPJmL_terra, xy = TRUE))
-GPP_LPJmL_dt[ , x := round(x, 7)]
-GPP_LPJmL_dt[ , y := round(y, 7)]
-# Note:  were are explicitly deriving and keeping the Date column for the rolling means etc below
-setnames(GPP_LPJmL_dt, new = c("Lon", "Lat", as.character(time(GPP_LPJmL_terra))))
-GPP_LPJmL_dt <- na.omit(melt.data.table(GPP_LPJmL_dt, id.vars = c("Lon", "Lat"), variable.factor = FALSE))
-GPP_LPJmL_dt[, Date := as.Date(variable)]
-GPP_LPJmL_dt[, variable := NULL]
-GPP_LPJmL_dt[, Year := year(Date)]
-GPP_LPJmL_dt[, Month := month(Date)]
-
-# set keys (important for the rolling means) and calculate summaries  
-setkey(GPP_LPJmL_dt, "Lon", "Lat", "Date")
-if(if_add_long_terms_means_and_deviations) GPP_LPJmL_dt <- add_long_term_means_and_deviations(GPP_LPJmL_dt, gs_dt, agg_fun = sum)
-GPP_LPJmL_dt <- add_antecedent_values(GPP_LPJmL_dt, FUN = sum)
-setnames(GPP_LPJmL_dt, gsub(pattern = "value", replacement = "GPP_LPJmL", names(GPP_LPJmL_dt)))
-GPP_LPJmL_dt[, Date := NULL]
-
-# for(year in 2000:2014){
-#   this_plot <- ggplot(GPP_combi[ Year == year,]) + geom_raster(aes(x = Lon, y = Lat, fill = rel_GPP_dev)) + scale_fill_distiller(palette = "RdBu", type = "div", limits = c(-1,1))
-#   this_plot <- this_plot + labs(title = year)
-#    print(this_plot) 
-# }
-
-
-# all years 
-master_full_dt <- merge.data.table(x = master_full_dt, y = GPP_LPJmL_dt, by = c("Lon", "Lat", "Year", "Month"))
-
-message(paste0("*** Completed LPJml GPP ***"))
-current_row_size <- check_row_count(full_dt = master_full_dt, previous_row_count = current_row_size)
-rm(GPP_LPJmL_dt, GPP_LPJmL_terra)
-
-
-#### FINAL POST-PROCESSING ####
-
-# calculate GDP per capita
-# this catch cases where
-master_full_dt[, GDP_capita_Wang := pmin(Inf, GDP_gridcell_Wang/Pop_dens_static)]
-master_full_dt$GDP_capita_Wang[master_full_dt$Pop_dens_static == 0] <- 0
 
 
 #### SAVE FILES ####

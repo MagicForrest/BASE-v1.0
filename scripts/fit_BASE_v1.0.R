@@ -91,10 +91,7 @@ lcc_colours <- c("PureCropland" = "orchid4", "NCV" ="springgreen4")
 
 #### SPECIFY MODELS TO FIT ####
 source(here("scripts/v1.0_sensitivity_models.R"))
-#model_specifications_list <- c(final_v1.0_models(), all_ncv_sensitivity_models(), all_cropland_sensitivity_models())
-model_specifications_list <- c(final_v1.0_models())
-#model_specifications_list <- c(all_ncv_sensitivity_models(), all_cropland_sensitivity_models())
-
+model_specifications_list <- c(final_v1.0_models(), all_ncv_sensitivity_models(), all_cropland_sensitivity_models())
 
 
 
@@ -783,18 +780,17 @@ for(model_spec in model_specifications_list) {
       if(length(all_single_ggplots_list) > 0) {
         all_single_predictors_plot <- ggarrange(plotlist = all_single_ggplots_list, common.legend = TRUE, legend = "right")
         magicPlot(p = all_single_predictors_plot, filename = file.path(output.dir, "All_Single_Predictors"), height = 1400, width = 1600)
-        pdf(file = file.path(manuscript_fig_dir,  output.dir, "All_Single_Predictors.pdf"), width = 14, height = 16)
+        pdf(file = file.path(output.dir, "All_Single_Predictors.pdf"), width = 16, height = 14)
         print(all_single_predictors_plot)
         dev.off()
       }
       if(length(all_interaction_ggplots_list) > 0) {
         all_interactions_plot <- ggarrange(plotlist = all_interaction_ggplots_list, common.legend = TRUE, legend = "right")
         magicPlot(p = all_interactions_plot, filename = file.path(output.dir, "All_Interacting_Predictors"), height = 1400, width = 1600)
-        pdf(file = file.path(manuscript_fig_dir,  output.dir, "All_Interacting_Predictors.pdf"), width = 14, height = 16)
+        pdf(file = file.path(output.dir, "All_Interacting_Predictors.pdf"), width = 16, height = 14)
         print(all_interactions_plot)
         dev.off()
-        
-         }
+      }
       
       
       
