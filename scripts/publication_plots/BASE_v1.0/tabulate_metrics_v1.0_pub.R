@@ -17,6 +17,9 @@ source(here("scripts", "glm_fitting_helper_functions.R"))
 #### 
 target <- "BurntFraction"
 analysis_version <- "BASE_v1.0"
+# fit version
+fit_batch_version <- "BASE_v1.0"
+
 plot_dir <- here("plots", analysis_version, "manuscript")
 dir.create(plot_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -105,7 +108,7 @@ round_df <- function(x, digits) {
 for(lcc_type in all_model_types) {
   
   # directory where runs are stored
-  runs_dir <- here("fitted_models",  analysis_version,  "GLMs", paste(target, lcc_type$name, sep = "_"))
+  runs_dir <- here("fitted_models",  analysis_version,  "GLMs", paste(target, lcc_type$name, sep = "_"), fit_batch_version)
   
   # build table and set names
   all_metrics_dt <- data.table()

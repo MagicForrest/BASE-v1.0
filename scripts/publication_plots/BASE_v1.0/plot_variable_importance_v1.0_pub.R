@@ -13,6 +13,8 @@ source(here("scripts", "plot_utils.R"))
 # text.multiplier <- 2.3
 
 analysis_version <- "BASE_v1.0"
+fit_batch_version <- "BASE_v1.0"
+
 
 #  Directories for reading data and saving plots
 pub_results_dir <- here("plots", analysis_version, "manuscript")
@@ -51,7 +53,7 @@ all_shap_plots <- list()
 for(this_baseline in baselines_list) {
 
   #### READ AND PLOT THE SHAP STATS ####
-  shap_df <- read.table(file.path(models_dir, paste("BurntFraction", this_baseline$name, sep = "_"),  this_baseline$baseline_model_id,  "shap_values.txt"),
+  shap_df <- read.table(file.path(models_dir, paste("BurntFraction", this_baseline$name, sep = "_"),  fit_batch_version, this_baseline$baseline_model_id,  "shap_values.txt"),
                            header = TRUE, stringsAsFactors = TRUE)
   shap_df <- data.frame(Predictor = factor(shap_df$Predictor, shap_df$Predictor, ordered = TRUE), Importance = shap_df$Importance)
   

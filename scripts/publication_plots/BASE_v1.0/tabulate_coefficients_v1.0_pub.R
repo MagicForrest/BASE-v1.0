@@ -14,12 +14,15 @@ signif_df <- function(x, digits) {
   return(x)
 }
 
-prefix_string <- "BASE_v1.0"
+# analysis version
+analysis_version <- "BASE_v1.0"
 
+# fit version
+fit_batch_version <- "BASE_v1.0"
 
 #  Directories for reading data and saving plots
 pub_results_dir <- here("plots/BASE_v1.0/manuscript/")
-fitted_models_dir <- here("fitted_models", prefix_string, "GLMs")
+fitted_models_dir <- here("fitted_models", analysis_version, "GLMs")
 
 
 #### GET ALL THE PREDICTORS ####
@@ -43,7 +46,7 @@ baselines_list <- list(
 for(this_lcc_class in baselines_list) {
   
   # read table
-  this_coeffs_table <- as.data.table(read.table(file.path(fitted_models_dir, paste("BurntFraction", this_lcc_class$name, sep = "_"), this_lcc_class$baseline_model_id, "coeffs_table.txt"),
+  this_coeffs_table <- as.data.table(read.table(file.path(fitted_models_dir, paste("BurntFraction", this_lcc_class$name, sep = "_"), fit_batch_version, this_lcc_class$baseline_model_id, "coeffs_table.txt"),
                                   header = TRUE))
   
   # tidy a little 

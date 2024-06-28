@@ -22,7 +22,10 @@ agg_method = "median"
 # define the models to plot
 ncv_model <- "BASE_v1.0"
 cropland_model <- "BASE_v1.0"
+
+# 
 analysis_version <- "BASE_v1.0"
+fit_batch_version <- "BASE_v1.0"
 
 
 # dataset names
@@ -44,10 +47,10 @@ models_dir <- here("fitted_models", analysis_version, "GLMs")
 #### READ DATA AND MODEL AND MAKE SOME TEMPLATES ####
 
 # read data.tables and set names
-ncv_dt <- readRDS(file.path(models_dir, "BurntFraction_NCV",  ncv_model, paste("DT", ncv_model, "rds", sep = ".")))
-ncv_model <- readRDS(file.path(models_dir, "BurntFraction_NCV",  ncv_model, paste("GLM", ncv_model, "rds", sep = ".")))
-cropland_dt <- readRDS(file.path(models_dir, "BurntFraction_PureCropland",  cropland_model, paste("DT", cropland_model, "rds", sep = ".")))
-cropland_model <- readRDS(file.path(models_dir, "BurntFraction_PureCropland",  cropland_model, paste("GLM", cropland_model, "rds", sep = ".")))
+ncv_dt <- readRDS(file.path(models_dir, "BurntFraction_NCV",  fit_batch_version, ncv_model, paste("DT", ncv_model, "rds", sep = ".")))
+ncv_model <- readRDS(file.path(models_dir, "BurntFraction_NCV",  fit_batch_version, ncv_model, paste("GLM", ncv_model, "rds", sep = ".")))
+cropland_dt <- readRDS(file.path(models_dir, "BurntFraction_PureCropland", fit_batch_version,  cropland_model, paste("DT", cropland_model, "rds", sep = ".")))
+cropland_model <- readRDS(file.path(models_dir, "BurntFraction_PureCropland",  fit_batch_version, cropland_model, paste("GLM", cropland_model, "rds", sep = ".")))
 setnames(ncv_dt, c("Observed_burnt_area", "Predicted_burnt_area_raw"), lcc_names) 
 setnames(cropland_dt, c("Observed_burnt_area", "Predicted_burnt_area_raw"), lcc_names) 
 
@@ -213,13 +216,13 @@ for(this_model in all_models) {
 }
 
 all_interaction_plots_fig <- ggarrange(plotlist = all_interaction_plots)
-magicPlot(p = all_interaction_plots_fig, filename = file.path(pub_results_dir, paste0("Figure_07_InteractionResponse")),  width = 950, height = 800)
+magicPlot(p = all_interaction_plots_fig, filename = file.path(pub_results_dir, paste0("Figure_E02_InteractionResponse")),  width = 950, height = 800)
 
-pdf(file = file.path(pub_results_dir, paste0("Figure_07_InteractionResponse.pdf")), width = 8, height = 7)
+pdf(file = file.path(pub_results_dir, paste0("Figure_E02_InteractionResponse.pdf")), width = 8, height = 7)
 print(all_interaction_plots_fig)
 dev.off()
 
-pdf(file = file.path(pub_results_dir, paste0("fig_07.pdf")), width = 8, height = 7)
+pdf(file = file.path(pub_results_dir, paste0("fig_E02.pdf")), width = 8, height = 7)
 print(all_interaction_plots_fig)
 dev.off()
 

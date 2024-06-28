@@ -2,7 +2,7 @@
 final_v1.0_models <- function(){
   
   list(
-    
+
     list(landcover = "NCV",
          description = "BASE v1.0",
          target = "BurntFraction",

@@ -12,7 +12,8 @@ source(here("scripts", "plot_helper_functions.R"))
 
 
 
-# this is the fit batch
+# this is the fit batch and analysis verisons
+fit_batch_version <- "BASE_v1.0"
 analysis_version <- "BASE_v1.0"
 
 # dataset name
@@ -112,7 +113,7 @@ for(this_baseline in baselines_list) {
   source_names <- c(obs_name, this_baseline$baseline_model_name) 
   
   # read data.tables and set names
-  this_dt <- readRDS(file.path(models_dir, paste("BurntFraction", this_baseline$name, sep = "_"),  this_baseline$baseline_model_id, paste("DT", this_baseline$baseline_model_id, "rds", sep = ".")))
+  this_dt <- readRDS(file.path(models_dir, paste("BurntFraction", this_baseline$name, sep = "_"),  fit_batch_version, this_baseline$baseline_model_id, paste("DT", this_baseline$baseline_model_id, "rds", sep = ".")))
   setnames(this_dt, c("Observed_burnt_area", "Predicted_burnt_area_raw"), source_names)
   
   this_yearmean <- this_dt[, lapply(.SD, FUN=mean, na.rm = TRUE), by = c("Lon", "Lat", "Month"), .SDcols = source_names]
@@ -162,7 +163,7 @@ for(this_sens in sensitivity_list) {
     this_alt_pretty <- gsub(pattern = "_", replacement = " ", x = this_alt)
     
     # read and format the alt data.table
-    alt_dt <- readRDS(file.path(models_dir, paste("BurntFraction", this_sens$lcc, sep = "_"), this_alt , paste("DT", this_alt, "rds", sep = ".")))
+    alt_dt <- readRDS(file.path(models_dir, paste("BurntFraction", this_sens$lcc, sep = "_"), fit_batch_version, this_alt , paste("DT", this_alt, "rds", sep = ".")))
     subset_columns <- c("Lon", "Lat", "Year", "Month", "Predicted_burnt_area_raw")
     alt_dt[ , ..subset_columns ]
     setnames(alt_dt, "Predicted_burnt_area_raw", this_alt_pretty)
@@ -212,12 +213,12 @@ for(this_sens in sensitivity_list) {
   # Fig D2
   if(this_sens$name == "Cropland_socioeconomics"){
     
-    magicPlot(p = spatial_plot, filename = file.path(manuscript_dir, paste0("Figure_D02_", this_sens$name)), width = 1500, height = 1800)
+    magicPlot(p = spatial_plot, filename = file.path(manuscript_dir, paste0("Figure_F02_", this_sens$name)), width = 1500, height = 1800)
     
-    pdf(file = file.path(manuscript_dir, paste0("Figure_D02_", this_sens$name, ".pdf")), width = 15, height = 18)
+    pdf(file = file.path(manuscript_dir, paste0("Figure_F02_", this_sens$name, ".pdf")), width = 15, height = 18)
     print(spatial_plot)
     dev.off()
-    pdf(file = file.path(manuscript_dir, paste0("fig_D02.pdf")), width = 15, height = 18)
+    pdf(file = file.path(manuscript_dir, paste0("fig_F02.pdf")), width = 15, height = 18)
     print(spatial_plot)
     dev.off()
     
@@ -243,12 +244,12 @@ for(this_sens in sensitivity_list) {
   # Fig D4
   if(this_sens$name == "MEPI_and_FWI_not_interacting"){
     
-    magicPlot(p = seasonal_plot, filename = file.path(manuscript_dir, paste("Figure_D04", "Seasonal", this_sens$name, sep = "_")), width = 1600, height = 900)
+    magicPlot(p = seasonal_plot, filename = file.path(manuscript_dir, paste("Figure_E01", "Seasonal", this_sens$name, sep = "_")), width = 1600, height = 900)
     
-    pdf(file = file.path(manuscript_dir, paste0("Figure_D04_Seasonal_", this_sens$name, ".pdf")), width = 16, height = 9)
+    pdf(file = file.path(manuscript_dir, paste0("Figure_E01_Seasonal_", this_sens$name, ".pdf")), width = 16, height = 9)
     print(seasonal_plot)
     dev.off()
-    pdf(file = file.path(manuscript_dir, paste0("fig_D04.pdf")), width = 16, height = 9)
+    pdf(file = file.path(manuscript_dir, paste0("fig_E01.pdf")), width = 16, height = 9)
     print(seasonal_plot)
     dev.off()
     
@@ -276,12 +277,12 @@ for(this_sens in sensitivity_list) {
   # Fig D1
   if(this_sens$name == "Cropland_socioeconomics"){
     
-    magicPlot(p = iav_plot, filename = file.path(manuscript_dir, paste("Figure_D01", "IAV", this_sens$name, sep = "_")), width = 1600, height = 900)
+    magicPlot(p = iav_plot, filename = file.path(manuscript_dir, paste("Figure_F01", "IAV", this_sens$name, sep = "_")), width = 1600, height = 900)
     
-    pdf(file = file.path(manuscript_dir, paste0("Figure_D01_IAV_", this_sens$name, ".pdf")), width = 16, height = 9)
+    pdf(file = file.path(manuscript_dir, paste0("Figure_F01_IAV_", this_sens$name, ".pdf")), width = 16, height = 9)
     print(iav_plot)
     dev.off()
-    pdf(file = file.path(manuscript_dir, paste0("fig_D01.pdf")), width = 16, height = 9)
+    pdf(file = file.path(manuscript_dir, paste0("fig_F01.pdf")), width = 16, height = 9)
     print(iav_plot)
     dev.off()
     
@@ -290,12 +291,12 @@ for(this_sens in sensitivity_list) {
   # Fig D3
   if(this_sens$name == "Omit_HDI_NCV"){
     
-    magicPlot(p = iav_plot, filename = file.path(manuscript_dir, paste("Figure_D03", "IAV", this_sens$name, sep = "_")), width = 1600, height = 900)
+    magicPlot(p = iav_plot, filename = file.path(manuscript_dir, paste("Figure_F03", "IAV", this_sens$name, sep = "_")), width = 1600, height = 900)
     
-    pdf(file = file.path(manuscript_dir, paste0("Figure_D03_IAV_", this_sens$name, ".pdf")), width = 16, height = 9)
+    pdf(file = file.path(manuscript_dir, paste0("Figure_F03_IAV_", this_sens$name, ".pdf")), width = 16, height = 9)
     print(iav_plot)
     dev.off()
-    pdf(file = file.path(manuscript_dir, paste0("fig_D03.pdf")), width = 16, height = 9)
+    pdf(file = file.path(manuscript_dir, paste0("fig_F03.pdf")), width = 16, height = 9)
     print(iav_plot)
     dev.off()
     

@@ -8,16 +8,16 @@ source(here("scripts", "plot_utils.R"))
 
 min_landcover_frac <- 0.1
 
-prefix_string <- "BASE_v1.0"
+analysis_version <- "BASE_v1.0"
 
 text_multiplier_pdf <- 1.2
 
 #  Directories for reading data and saving plots
-plot_dir <- here("plots/BASE_v1.0/manuscript/")
+plot_dir <- here("plots", analysis_version, "manuscript")
 
 # data to use
 # input data directory containing large data.tables already constructed with script 
-data_dir <- here("data_tables/BASE_v1.0")
+data_dir <- here("data_tables", analysis_version)
 data_version <- "BASE_v1.0_publication"
 
 #### READ THE MASTER DATATABLE ####

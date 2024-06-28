@@ -14,7 +14,9 @@ source(here("scripts", "plot_helper_functions.R"))
 # define the models to plot
 ncv_model <- "BASE_v1.0"
 cropland_model <- "BASE_v1.0"
+
 analysis_version <- "BASE_v1.0"
+fit_batch_version <- "BASE_v1.0"
 
 # dataset names
 obs_name <- "FireCCI51"
@@ -36,8 +38,8 @@ models_dir <- here("fitted_models", analysis_version, "GLMs")
 #### READ AND PROCESS THE DATA ####
 
 # read data.tables and set names
-ncv_dt <- readRDS(file.path(models_dir, "BurntFraction_NCV",  ncv_model, paste("DT", ncv_model, "rds", sep = ".")))
-cropland_dt <- readRDS(file.path(models_dir, "BurntFraction_PureCropland",  cropland_model, paste("DT", cropland_model, "rds", sep = ".")))
+ncv_dt <- readRDS(file.path(models_dir, "BurntFraction_NCV",  fit_batch_version, ncv_model, paste("DT", ncv_model, "rds", sep = ".")))
+cropland_dt <- readRDS(file.path(models_dir, "BurntFraction_PureCropland",  fit_batch_version, cropland_model, paste("DT", cropland_model, "rds", sep = ".")))
 setnames(ncv_dt, c("Observed_burnt_area", "Predicted_burnt_area_raw"), lcc_names) 
 setnames(cropland_dt, c("Observed_burnt_area", "Predicted_burnt_area_raw"), lcc_names) 
 
