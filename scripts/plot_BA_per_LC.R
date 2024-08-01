@@ -318,9 +318,9 @@ for(this_group in all_groups) {
   
   bf_cuts <- c(0.00, 0.001, 0.002, 0.005, 0.01,0.02,0.05,0.10,0.20,0.50,1)
   bf_cuts <- bf_cuts * 100
-  bf_cols <- turbo(length(bf_cuts)-1)
+  bf_cols <- inferno(length(bf_cuts)-1)
   all_maps_dt[ , BurntFraction_cut := cut(BurntFraction, bf_cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE)]
-  spatial_plot <- ggplot(all_maps_dt[  `Land cover class`  %in% this_group$subclasses, ]) + geom_tile(aes(x = Lon, y = Lat, fill = BurntFraction_cut)) + scale_fill_viridis(option = "H", name = "%", discrete = TRUE) + facet_wrap(~`Land cover class` ) 
+  spatial_plot <- ggplot(all_maps_dt[  `Land cover class`  %in% this_group$subclasses, ]) + geom_tile(aes(x = Lon, y = Lat, fill = BurntFraction_cut)) + scale_fill_viridis(option = "B", name = "%", discrete = TRUE) + facet_wrap(~`Land cover class` ) 
   spatial_plot <- spatial_plot+ theme_bw() 
   spatial_plot <- spatial_plot+ coord_cartesian() 
   spatial_plot <- spatial_plot + scale_x_continuous(expand = c(0, 0)) 
@@ -352,7 +352,7 @@ for(this_group in all_groups) {
   lc_maps <- lc_maps +  geom_sf(data=overlay, 
                                 fill = "transparent", 
                                 linewidth = 0.2,
-                                colour="green")
+                                colour="cyan")
   magicPlot(p = lc_maps, filename = file.path(results_dir, paste0(gsub(" ", "_", this_group$name), "_", "LandCoverFraction_Maps")),  width = 1400, height = 1200)
   if(this_group$name == "Main Figures") {
     magicPlot(p = lc_maps, filename = file.path(plot_dir, paste0("FigureS1_NCV_and_Cropland_LC_Fractions")),  width = 1800, height = 1500)

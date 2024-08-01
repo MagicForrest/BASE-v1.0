@@ -86,7 +86,7 @@ k <- 8
 basis_splines <- "cr"
 
 # lcc class colours
-lcc_colours <- c("PureCropland" = "orchid4", "NCV" ="springgreen4")
+lcc_colours <- c("PureCropland" = "orchid3", "NCV" ="springgreen4")
 
 
 #### SPECIFY MODELS TO FIT ####
@@ -840,7 +840,7 @@ for(model_spec in model_specifications_list) {
               this_prediction_fraction_or_area[ , value := cut(value, this_var$cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE)]
               
               
-              this_prediction_plot <- ggplot(this_prediction_fraction_or_area[ variable %in% this_var$pretty_columns,]) +  geom_raster(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "H", name = this_var$title, discrete = TRUE) + facet_wrap(~variable)
+              this_prediction_plot <- ggplot(this_prediction_fraction_or_area[ variable %in% this_var$pretty_columns,]) +  geom_raster(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "B", name = this_var$title, discrete = TRUE) + facet_wrap(~variable)
               this_prediction_plot <- this_prediction_plot + labs(title = paste("Burnt", this_var$name, "in", landcover,":",  month_labels[this_month]),
                                                                   caption = caption_text)
               this_prediction_plot <- this_prediction_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
@@ -882,7 +882,7 @@ for(model_spec in model_specifications_list) {
             this_prediction_fraction_or_area[ , value := cut(value, this_var$cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE)]
             
             
-            this_prediction_plot <- ggplot(this_prediction_fraction_or_area[ variable %in% gsub("_", " ", this_var$pretty_columns, fixed = TRUE),]) +  geom_raster(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "H", name = this_var$title, discrete = TRUE) + facet_wrap(~variable)
+            this_prediction_plot <- ggplot(this_prediction_fraction_or_area[ variable %in% gsub("_", " ", this_var$pretty_columns, fixed = TRUE),]) +  geom_raster(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "B", name = this_var$title, discrete = TRUE) + facet_wrap(~variable)
             this_prediction_plot <- this_prediction_plot + labs(title = paste("Burnt", this_var$name, "in", landcover,": Annual"),
                                                                 caption = caption_text)
             this_prediction_plot <- this_prediction_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))

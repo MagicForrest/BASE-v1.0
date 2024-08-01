@@ -15,7 +15,7 @@ source(here("scripts", "plot_helper_functions.R"))
 source(here("scripts", "glm_fitting_helper_functions.R"))
 
 
-lcc_colours <- c("Cropland" = "orchid4", "NCV" ="springgreen4")
+lcc_colours <- c("Cropland" = "orchid3", "NCV" ="springgreen4")
 
 agg_method = "median"
 

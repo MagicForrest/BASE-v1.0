@@ -25,7 +25,7 @@ lcc_names <- c(obs_name, sim_name)
 
 
 ba_cuts <- c(0,5,10,20,50,100,200,500,1000,2000,5000,10000)
-ba_cols <- turbo(length(ba_cuts)-1)
+ba_cols <- inferno(length(ba_cuts)-1)
 text.multiplier <- 2.8
 
 
@@ -68,15 +68,15 @@ spatial_dt <- rbind(ncv_spatial, cropland_spatial)
 spatial_dt_for_plotting <- melt(spatial_dt, id.vars = c("Lon", "Lat", "LCC"), variable.name = "Source", value = "Burnt Area")
 spatial_dt_for_plotting[ , value := cut(`Burnt Area`, ba_cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE, dig.lab =4)]
 
-spatial_plot <- ggplot(spatial_dt_for_plotting) + geom_tile(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "H", name = "Burnt area (ha)", discrete = TRUE) 
+spatial_plot <- ggplot(spatial_dt_for_plotting) + geom_tile(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "B", name = "Burnt area (ha)", discrete = TRUE) 
 spatial_plot <- spatial_plot + coord_cartesian(expand = FALSE) + facet_grid(LCC ~ Source, switch = "y" ) + theme_bw()
 spatial_plot <- spatial_plot + scale_x_continuous(expand = c(0, 0))
 spatial_plot <- spatial_plot +scale_y_continuous(expand = c(0, 0))
 if(!is.null(this_overlay)) {
   spatial_plot <- spatial_plot +  geom_sf(data=this_overlay, 
                                           fill = "transparent", 
-                                          linewidth = 0.2,
-                                          colour= "magenta")
+                                          linewidth = 0.1,
+                                          colour= "cyan")
 }
 spatial_plot <- spatial_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier),
                                      axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
@@ -84,11 +84,11 @@ print(spatial_plot)
 
 magicPlot(p = spatial_plot, filename = file.path(manuscript_fig_dir, "Figure_04_Spatial_BA"), width = 1100, height = 1200, type = "png")
 
-pdf(file = file.path(manuscript_fig_dir, paste0("Figure_04_Spatial_BA.pdf")), width = 11, height = 12)
+pdf(file = file.path(manuscript_fig_dir, paste0("Figure_04_Spatial_BA.pdf")), width = 16.5, height = 18)
 print(spatial_plot)
 dev.off()
 
-pdf(file = file.path(manuscript_fig_dir, paste0("fig_04.pdf")), width = 11, height = 12)
+pdf(file = file.path(manuscript_fig_dir, paste0("fig_04.pdf")), width = 16.5, height = 18)
 print(spatial_plot)
 dev.off()
 
@@ -109,7 +109,7 @@ iav_plot <- iav_plot + theme_bw()
 iav_plot <- iav_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
 
 iav_plot <- iav_plot + facet_wrap( ~LCC, ncol = 1, scales = "free")
-iav_plot <- iav_plot + scale_colour_manual(values = c("Cropland" = "orchid4", 
+iav_plot <- iav_plot + scale_colour_manual(values = c("Cropland" = "orchid3", 
                                                             "NCV" ="springgreen4"), guide = "none")
 iav_plot <- iav_plot + labs(y = "Burnt area (Mha)")
 
@@ -141,7 +141,7 @@ seasonal_plot <- seasonal_plot + scale_x_continuous(breaks = 1:12, labels = c("J
 seasonal_plot <- seasonal_plot + theme_bw() 
 seasonal_plot <- seasonal_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier))
 seasonal_plot <- seasonal_plot + facet_wrap( ~LCC, ncol = 1, scales = "free")
-seasonal_plot <- seasonal_plot + scale_colour_manual(values = c("Cropland" = "orchid4", 
+seasonal_plot <- seasonal_plot + scale_colour_manual(values = c("Cropland" = "orchid3", 
                                                       "NCV" ="springgreen4"), guide = "none")
 seasonal_plot <- seasonal_plot + labs(y = "Burnt area (Mha)")
 

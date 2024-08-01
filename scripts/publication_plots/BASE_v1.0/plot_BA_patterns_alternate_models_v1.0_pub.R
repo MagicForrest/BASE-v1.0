@@ -5,7 +5,7 @@ library(viridis)
 library(sf)
 
 # define root path with here package and 
-here::i_am("scripts/compare_BASE_versions.R")
+here::i_am("scripts/publication_plots/BASE_v1.0/plot_BA_patterns_alternate_models_v1.0_pub.R")
 library(here)
 source(here("scripts", "plot_utils.R"))
 source(here("scripts", "plot_helper_functions.R"))
@@ -20,7 +20,7 @@ analysis_version <- "BASE_v1.0"
 obs_name <- "FireCCI51"
 obs_linetype <- "solid"
 
-cropland_col <- "orchid4"
+cropland_col <-"orchid3"
   
 ncv_col <- "springgreen4"
   
@@ -28,7 +28,7 @@ ncv_col <- "springgreen4"
 
 # for plotting
 ba_cuts <- c(0,5,10,20,50,100,200,500,1000,2000,5000,10000)
-ba_cols <- turbo(length(ba_cuts)-1)
+ba_cols <- inferno(length(ba_cuts)-1)
 text.multiplier <- 2.8
 
 #  Directories for reading data and saving plots
@@ -64,26 +64,26 @@ sensitivity_list <- list(
                                    lcc = "PureCropland",
                                    baseline_str = baselines_list[["Cropland"]]$baseline_model_id,
                                    simulations = list(list(id = "Omit_GDP",
-                                                           col = "royalblue3",
-                                                           linetype = "11"),
+                                                           col = "royalblue4",
+                                                           linetype = "44"),
                                                       list(id = "Replace_GDP_with_HDI",
-                                                           col = "hotpink",
-                                                           linetype = "11"))),
+                                                           col = "sienna2",
+                                                           linetype = "33"))),
   
   "MEPI_and_FWI_not_interacting" = list(name = "MEPI_and_FWI_not_interacting",
                                         lcc = "NCV",
                                         baseline_str = baselines_list[["NCV"]]$baseline_model_id,
                                         simulations = list(list(id = "MEPI_and_FWI_not_interacting",
                                                                 col = "sienna2",
-                                                                linetype = "11"))),
+                                                                linetype = "33"))),
   
   
   "Omit_HDI_NCV" = list(name = "Omit_HDI_NCV",
                         lcc = "NCV",
                         baseline_str = baselines_list[["NCV"]]$baseline_model_id,
                         simulations = list(list(id = "Omit_HDI",
-                                                col = "royalblue3",
-                                                linetype = "11"))),
+                                                col = "royalblue4",
+                                                linetype = "44"))),
   
   
   
@@ -92,7 +92,7 @@ sensitivity_list <- list(
                                 baseline_str = baselines_list[["Cropland"]]$baseline_model_id,
                                 simulations = list(list(id = "Wind_speed_quadratic",
                                                         col = "red4",
-                                                        linetype = "11")))
+                                                        linetype = "44")))
   
 )
 
@@ -191,14 +191,14 @@ for(this_sens in sensitivity_list) {
   sens_spatial_dt[ , value := cut(`Burnt Area`, ba_cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE, dig.lab =4)]
   suppressWarnings(this_overlay <- makeOverLay(sens_spatial_dt))
   
-  spatial_plot <- ggplot(sens_spatial_dt) + geom_tile(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "H", name = "Burnt area (ha)", discrete = TRUE)
+  spatial_plot <- ggplot(sens_spatial_dt) + geom_tile(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "B", name = "Burnt area (ha)", discrete = TRUE)
   spatial_plot <- spatial_plot + coord_cartesian() + facet_wrap( ~ Source) + theme_bw()
   if(!is.null(this_overlay)) {
       suppressMessages(
         spatial_plot <- spatial_plot +  geom_sf(data=this_overlay, 
                                                 fill = "transparent", 
-                                                linewidth = 0.2,
-                                                colour= "magenta")
+                                                linewidth = 0.1,
+                                                colour= "cyan")
       )
   }
   spatial_plot <- spatial_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier),
@@ -210,7 +210,7 @@ for(this_sens in sensitivity_list) {
   
   # paper plots
   
-  # Fig D2
+  # Fig F02
   if(this_sens$name == "Cropland_socioeconomics"){
     
     magicPlot(p = spatial_plot, filename = file.path(manuscript_dir, paste0("Figure_F02_", this_sens$name)), width = 1500, height = 1800)

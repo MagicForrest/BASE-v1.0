@@ -24,4 +24,4 @@ file.copy(here("fitted_models", analysis_version, "GLMs", "BurntFraction_PureCro
 file.copy(here("fitted_models", analysis_version, "GLMs", "BurntFraction_PureCropland", fit_batch_version, cropland_model, "All_Single_Predictors.pdf"), 
           here("plots", analysis_version, "manuscript/Figure_D02_PureCropland_Partial_Residuals.pdf"), overwrite = TRUE )
 file.copy(here("fitted_models", analysis_version, "GLMs", "BurntFraction_PureCropland", fit_batch_version, cropland_model, "All_Single_Predictors.pdf"), 
-          here("plots", analysis_version, "manuscript/fig_D02.png"), overwrite = TRUE )
+          here("plots", analysis_version, "manuscript/fig_D02.pdf"), overwrite = TRUE )

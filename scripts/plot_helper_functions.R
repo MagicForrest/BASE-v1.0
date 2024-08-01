@@ -114,11 +114,11 @@ makeOverLay <- function(spatial_dt) {
 spatialPlot <- function(spatial_dt, overlay = NULL, ...){
   
   ba_cuts <- c(0,1,2,5,10,20,50,100,200,500,1000,2000,5000,10000)
-  ba_cols <- turbo(length(ba_cuts)-1)
+  ba_cols <- inferno(length(ba_cuts)-1)
   
   spatial_dt_for_plotting <- melt(spatial_dt, id.vars = c("Lon", "Lat"), variable.name = "Source", value = "Burnt Area")
   spatial_dt_for_plotting[ , value := cut(`Burnt Area`, ba_cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE)]
-  spatial_plot <- ggplot(spatial_dt_for_plotting) + geom_tile(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "H", name = "Burnt area (ha)", discrete = TRUE) + facet_wrap(~Source) 
+  spatial_plot <- ggplot(spatial_dt_for_plotting) + geom_tile(aes(x = Lon, y = Lat, fill = value)) + scale_fill_viridis(option = "B", name = "Burnt area (ha)", discrete = TRUE) + facet_wrap(~Source) 
   spatial_plot <- spatial_plot + coord_cartesian() 
   if(!is.null(overlay)) {
     spatial_plot <- spatial_plot +  geom_sf(data=overlay, 

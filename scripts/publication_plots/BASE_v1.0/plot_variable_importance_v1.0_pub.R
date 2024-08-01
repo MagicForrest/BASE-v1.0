@@ -23,7 +23,7 @@ models_dir <- here("fitted_models", analysis_version, "GLMs")
 
 #### DEFINE BASELINES ####
 
-cropland_col <- "orchid4"
+cropland_col <- "orchid3"
 ncv_col <- "springgreen4"
   
 baselines_list <- list(

@@ -175,22 +175,22 @@ for(lcc_type in all_model_types) {
   relative_table_gt <- tab_style(relative_table_gt, 
                                  locations = cells_body(rows = get(dev_col) >= 0.005,
                                                         columns = dev_col),
-                                 style = cell_text(color = "blue4", weight = "bold"))
+                                 style = cell_text(style = "italic"))
   relative_table_gt <- tab_style(relative_table_gt, 
                                  locations = cells_body(rows = get(dev_col) <= -0.005,
                                                         columns = dev_col),
-                                 style = cell_text(color = "red4", weight = "bold"))
+                                 style = cell_text(weight = "bold"))
   
   # colour other metric text (opposite way)
   for(this_metric in final_col_names[3:length(final_col_names)]) {
     relative_table_gt <- tab_style(relative_table_gt, 
                                    locations = cells_body(rows = get(this_metric) >= 0.005,
                                                           columns = this_metric),
-                                   style = cell_text(color = "red4", weight = "bold"))
+                                   style = cell_text(weight = "bold"))
     relative_table_gt <- tab_style(relative_table_gt, 
                                    locations = cells_body(rows = get(this_metric) <= -0.005,
                                                           columns = this_metric),
-                                   style = cell_text(color = "blue4", weight = "bold"))
+                                   style = cell_text(style = "italic"))
   }
   
    # ste main model black and bold

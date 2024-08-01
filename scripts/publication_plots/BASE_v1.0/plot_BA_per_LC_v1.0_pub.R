@@ -188,7 +188,7 @@ ba_histo <- ba_histo + scale_x_discrete(limits = positions)
 ba_histo <- ba_histo + scale_alpha_manual(values = c("Total" = 1, "Category" = 1, "Subcategory" = 0.5),
                                           guide="none")
 ba_histo <- ba_histo + scale_fill_manual(values = c("Total" = "midnightblue", 
-                                                    "Cropland" = "orchid4", 
+                                                    "Cropland" = "orchid3", 
                                                     "NCV" ="springgreen4"), 
                                          guide="none")
 
@@ -255,7 +255,7 @@ for(this_group in all_groups) {
   seasonal_plot <- ggplot(all_seasonal_dt[ `Land cover class` %in% this_group$subclasses, ]) + geom_line(aes(x = Month, y = BurntFraction, col = `Land cover class` , linetype = `Land cover class` ), linewidth = 2)
   if(this_group$name == "Main Figures") {
     seasonal_plot <- ggplot(all_seasonal_dt[ `Land cover class` %in% this_group$subclasses, ]) + geom_line(aes(x = Month, y = BurntFraction, col = `Land cover class`), linewidth = 2)
-    seasonal_plot <- seasonal_plot + scale_color_manual(values = c("Herb. croplands" = "orchid4", 
+    seasonal_plot <- seasonal_plot + scale_color_manual(values = c("Herb. croplands" = "orchid3", 
                                                                    "NCV" ="springgreen4"))
     fig1_seasonal <- seasonal_plot
   }
@@ -286,7 +286,7 @@ for(this_group in all_groups) {
     annual_plot <- ggplot(all_yearly_dt[  `Land cover class`  %in% this_group$subclasses, ])  
     annual_plot <- annual_plot + geom_smooth(aes(x = Year, y = BurntFraction, col = `Land cover class`), method=lm, linewidth = 2, alpha = 0.6) 
     annual_plot <- annual_plot + geom_line(aes(x = Year, y = BurntFraction, col = `Land cover class`), linewidth = 2)
-    annual_plot <- annual_plot + scale_colour_manual(values = c("Herb. croplands" = "orchid4", 
+    annual_plot <- annual_plot + scale_colour_manual(values = c("Herb. croplands" = "orchid3", 
                                                                 "NCV" ="springgreen4"))
   }
   annual_plot <- annual_plot + labs(y = "Mean burnt fraction")
@@ -302,7 +302,7 @@ for(this_group in all_groups) {
     
     annual_plot_norm <- annual_plot_norm + geom_smooth(aes(x = Year, y = BurntFraction, col = `Land cover class`), method=lm, linewidth = 2, alpha = 0.6) 
     annual_plot_norm <- annual_plot_norm + geom_line(aes(x = Year, y = BurntFraction, col = `Land cover class`), linewidth = 2)
-    annual_plot_norm <- annual_plot_norm + scale_colour_manual(values = c("Herb. croplands" = "orchid4", 
+    annual_plot_norm <- annual_plot_norm + scale_colour_manual(values = c("Herb. croplands" = "orchid3", 
                                                                           "NCV" ="springgreen4"))
   }
   annual_plot_norm <- annual_plot_norm + labs(y = "Mean burnt fraction (normalised)")
@@ -310,7 +310,7 @@ for(this_group in all_groups) {
   annual_plot_norm <- annual_plot_norm + theme(text = element_text(size = theme_get()$text$size * text_multiplier_png))
   if(dev_plots)  magicPlot(p = annual_plot_norm, filename = file.path(results_dir, paste0(gsub(" ", "_", this_group$name), "_", "NormalisedYearly")), width = 1400, height = 900)
   if(this_group$name == "Main Figures") {
-    annual_plot_norm <- annual_plot_norm + scale_colour_manual(values = c("Herb. croplands" = "orchid4", 
+    annual_plot_norm <- annual_plot_norm + scale_colour_manual(values = c("Herb. croplands" = "orchid3", 
                                                                           "NCV" ="springgreen4"), 
                                                                guide="none")
     fig1_annual <- annual_plot_norm
@@ -330,9 +330,9 @@ for(this_group in all_groups) {
   
   bf_cuts <- c(0.00, 0.001, 0.002, 0.005, 0.01,0.02,0.05,0.10,0.20,0.50,1)
   bf_cuts <- bf_cuts * 100
-  bf_cols <- turbo(length(bf_cuts)-1)
+  bf_cols <- inferno(length(bf_cuts)-1)
   all_maps_dt[ , BurntFraction_cut := cut(BurntFraction, bf_cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE)]
-  spatial_plot <- ggplot(all_maps_dt[  `Land cover class`  %in% this_group$subclasses, ]) + geom_tile(aes(x = Lon, y = Lat, fill = BurntFraction_cut)) + scale_fill_viridis(option = "H", name = "%", discrete = TRUE) + facet_wrap(~`Land cover class` ) 
+  spatial_plot <- ggplot(all_maps_dt[  `Land cover class`  %in% this_group$subclasses, ]) + geom_tile(aes(x = Lon, y = Lat, fill = BurntFraction_cut)) + scale_fill_viridis(option = "B", name = "%", discrete = TRUE) + facet_wrap(~`Land cover class` ) 
   spatial_plot <- spatial_plot + theme_bw() 
   spatial_plot <- spatial_plot + coord_cartesian() 
   spatial_plot <- spatial_plot + scale_x_continuous(expand = c(0, 0)) 
@@ -342,8 +342,8 @@ for(this_group in all_groups) {
                                        axis.text.x = element_text(angle = 45))
   spatial_plot <- spatial_plot +  geom_sf(data=overlay, 
                                           fill = "transparent", 
-                                          linewidth = 0.2,
-                                          colour= "magenta")
+                                          linewidth = 0.1,
+                                          colour="cyan")
   if(dev_plots)  magicPlot(p = spatial_plot, filename = file.path(results_dir, paste0(gsub(" ", "_", this_group$name), "_", "Maps")),  width = 1400, height = 1200)
   if(this_group$name == "Main Figures") {
     fig1_spatial <- spatial_plot
@@ -372,8 +372,8 @@ for(this_group in all_groups) {
                              axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
   lc_maps <- lc_maps +  geom_sf(data=overlay, 
                                 fill = "transparent", 
-                                linewidth = 0.2,
-                                colour="green")
+                                linewidth = 0.1,
+                                colour="cyan")
   if(dev_plots) magicPlot(p = lc_maps, filename = file.path(results_dir, paste0(gsub(" ", "_", this_group$name), "_", "LandCoverFraction_Maps")),  width = 1400, height = 1200)
   if(this_group$name == "Main Figures") {
     magicPlot(p = lc_maps, filename = file.path(pub_results_dir, paste0("Figure_A01_NCV_and_Cropland_LC_Fractions")),  width = 1000, height = 700)

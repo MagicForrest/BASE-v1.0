@@ -140,7 +140,7 @@ for(this_lc in sort(unique(euro_data$L1))) {
   total_ba_sum <- euro_data[ L1 == this_lc , .(Area = sum(area)/num_years * 100), by = c("LON_GRID", "LAT_GRID")]
   total_ba_sum <- na.omit(total_ba_sum)
   total_plot <- ggplot(total_ba_sum) + geom_raster(aes(x=LON_GRID, y = LAT_GRID, fill = Area))
-  total_plot <- total_plot + scale_fill_viridis(trans = "log", option = "H")
+  total_plot <- total_plot + scale_fill_viridis(trans = "log", option = "B")
   total_plot <- total_plot + labs(title = paste(this_lc))
   total_plot <- total_plot + coord_cartesian()
   print(total_plot)
@@ -156,7 +156,7 @@ for(this_lc in sort(unique(euro_data$L1))) {
   total_ba_sum <- euro_data[ L1 == this_lc & area > 10, .(Area = sum(area)/num_years * 100), by = c("LON_GRID", "LAT_GRID")]
   total_ba_sum <- na.omit(total_ba_sum)
   total_plot <- ggplot(total_ba_sum) + geom_raster(aes(x=LON_GRID, y = LAT_GRID, fill = Area))
-  total_plot <- total_plot + scale_fill_viridis(trans = "log", option = "H")
+  total_plot <- total_plot + scale_fill_viridis(trans = "log", option = "B")
   total_plot <- total_plot + labs(title = paste(this_lc))
   total_plot <- total_plot + coord_equal()
   print(total_plot)
@@ -170,7 +170,7 @@ total_ba_sum <- euro_data[ L1 != 10 & area > 2, .(Area = sum(area)/num_years * 1
 total_ba_sum <- na.omit(total_ba_sum)
 total_ba_sum[ , value := cut(`Area`, ba_cuts, right = FALSE, include.lowest = TRUE, ordered_result = FALSE, dig.lab =4)]
 total_plot <- ggplot(total_ba_sum) + geom_raster(aes(x=LON_GRID, y = LAT_GRID, fill = value)) 
-total_plot <- total_plot + scale_fill_viridis(option = "H", name = "Burnt area (ha)", discrete = TRUE, drop = FALSE) 
+total_plot <- total_plot + scale_fill_viridis(option = "B", name = "Burnt area (ha)", discrete = TRUE, drop = FALSE) 
 total_plot <- total_plot + coord_equal()
 print(total_plot)
 
