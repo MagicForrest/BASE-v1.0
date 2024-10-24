@@ -216,13 +216,13 @@ for(this_model in all_models) {
 }
 
 all_interaction_plots_fig <- ggarrange(plotlist = all_interaction_plots)
-magicPlot(p = all_interaction_plots_fig, filename = file.path(pub_results_dir, paste0("Figure_E02_InteractionResponse")),  width = 950, height = 800)
+magicPlot(p = all_interaction_plots_fig, filename = file.path(pub_results_dir, paste0("Figure_F02_InteractionResponse")),  width = 950, height = 800)
 
-pdf(file = file.path(pub_results_dir, paste0("Figure_E02_InteractionResponse.pdf")), width = 8, height = 7)
+pdf(file = file.path(pub_results_dir, paste0("Figure_F02_InteractionResponse.pdf")), width = 9, height = 7)
 print(all_interaction_plots_fig)
 dev.off()
 
-pdf(file = file.path(pub_results_dir, paste0("fig_E02.pdf")), width = 8, height = 7)
+pdf(file = file.path(pub_results_dir, paste0("fig_F02.pdf")), width = 9, height = 7)
 print(all_interaction_plots_fig)
 dev.off()
 

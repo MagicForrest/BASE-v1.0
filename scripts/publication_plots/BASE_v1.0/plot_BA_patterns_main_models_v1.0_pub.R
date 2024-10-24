@@ -76,19 +76,28 @@ if(!is.null(this_overlay)) {
   spatial_plot <- spatial_plot +  geom_sf(data=this_overlay, 
                                           fill = "transparent", 
                                           linewidth = 0.1,
-                                          colour= "cyan")
+                                          colour= "cyan") + scale_linewidth_identity()
 }
+print(theme_get()$text$size)
 spatial_plot <- spatial_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier),
                                      axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+print(theme_get()$text$size)
+
 print(spatial_plot)
 
 magicPlot(p = spatial_plot, filename = file.path(manuscript_fig_dir, "Figure_04_Spatial_BA"), width = 1100, height = 1200, type = "png")
 
-pdf(file = file.path(manuscript_fig_dir, paste0("Figure_04_Spatial_BA.pdf")), width = 16.5, height = 18)
+
+spatial_plot <- spatial_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier * 1.7),
+                                     axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+spatial_plot <- spatial_plot  + theme(panel.spacing = unit(2.5, "lines"))
+
+pdf(file = file.path(manuscript_fig_dir, paste0("Figure_04_Spatial_BA.pdf")), width = 33, height = 26)
 print(spatial_plot)
 dev.off()
 
-pdf(file = file.path(manuscript_fig_dir, paste0("fig_04.pdf")), width = 16.5, height = 18)
+pdf(file = file.path(manuscript_fig_dir, paste0("fig_04.pdf")), width = 33, height = 26)
 print(spatial_plot)
 dev.off()
 
@@ -111,6 +120,8 @@ iav_plot <- iav_plot + theme(text = element_text(size = theme_get()$text$size * 
 iav_plot <- iav_plot + facet_wrap( ~LCC, ncol = 1, scales = "free")
 iav_plot <- iav_plot + scale_colour_manual(values = c("Cropland" = "orchid3", 
                                                             "NCV" ="springgreen4"), guide = "none")
+iav_plot <- iav_plot + scale_linetype_manual(values = c("FireCCI51" = "solid", 
+                                                      "BASE" ="11"), guide = "none")
 iav_plot <- iav_plot + labs(y = "Burnt area (Mha)")
 
 print(iav_plot)
@@ -143,6 +154,8 @@ seasonal_plot <- seasonal_plot + theme(text = element_text(size = theme_get()$te
 seasonal_plot <- seasonal_plot + facet_wrap( ~LCC, ncol = 1, scales = "free")
 seasonal_plot <- seasonal_plot + scale_colour_manual(values = c("Cropland" = "orchid3", 
                                                       "NCV" ="springgreen4"), guide = "none")
+seasonal_plot <- seasonal_plot + scale_linetype_manual(values = c("FireCCI51" = "solid", 
+                                                        "BASE" ="11"), guide = "none")
 seasonal_plot <- seasonal_plot + labs(y = "Burnt area (Mha)")
 
 print(seasonal_plot)

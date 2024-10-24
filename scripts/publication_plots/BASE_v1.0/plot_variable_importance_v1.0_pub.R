@@ -62,7 +62,7 @@ for(this_baseline in baselines_list) {
   shap_plot <- shap_plot + geom_bar(aes(y = Importance, x= Predictor), stat = "identity", fill = this_baseline$colour)
   shap_plot <- shap_plot + coord_flip() + theme_bw()
   shap_plot <- shap_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier),
-                                 plot.margin = margin(r = 15))
+                                 plot.margin = margin(r = 15, l = 15))
   shap_plot <- shap_plot + labs(y = "SHAP Importance", x = paste(this_baseline$nice_name, "Predictor"))
 
   # print and save the plots and SHAP values
@@ -77,7 +77,7 @@ for(this_baseline in baselines_list) {
 fig03_png <- ggarrange(plotlist = all_shap_plots,
                        ncol = 2,
                        labels = "auto",
-                       font.label = list(size = 18, face = "bold"), 
+                       font.label = list(size = 25, face = "bold"), 
                        align = "hv"
 )
 
@@ -86,7 +86,7 @@ magicPlot(p = fig03_png, filename = file.path(pub_results_dir, paste("Figure_03_
 fig03_pdf <- ggarrange(plotlist = all_shap_plots,
                        ncol = 2,
                        labels = "auto",
-                       font.label = list(size = 18, face = "bold"), 
+                       font.label = list(size = 25, face = "bold"), 
                        align = "hv"
 )
 
