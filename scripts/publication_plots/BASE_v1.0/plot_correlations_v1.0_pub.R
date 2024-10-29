@@ -121,16 +121,16 @@ for(this_lcc_class in baselines_list) {
 
 #### AND COMBINE ####
 
-figc1_png <- ggarrange(plotlist = all_corrplots_png,
+figs6_png <- ggarrange(plotlist = all_corrplots_png,
                    ncol = 1,
                    labels = "auto",
                    font.label = list(size = 24, face = "bold"), 
                    align = "hv"
 )
 
-magicPlot(p = figc1_png, filename = file.path(plot_dir, paste("Figure_C01_Predictor_Correlation")), width= 1000, height  = 1800)
+magicPlot(p = figs6_png, filename = file.path(plot_dir, paste("Figure_S6_Predictor_Correlation")), width= 1000, height  = 1800)
 
-figc1_pdf <- ggarrange(plotlist = all_corrplots_pdf,
+figs6_pdf <- ggarrange(plotlist = all_corrplots_pdf,
                        ncol = 1,
                        labels = "auto",
                        font.label = list(size = 24, face = "bold"), 
@@ -138,12 +138,12 @@ figc1_pdf <- ggarrange(plotlist = all_corrplots_pdf,
 )
 
 
-pdf(file = file.path(plot_dir, paste0("Figure_C01_Predictor_Correlation.pdf")), width = 10, height = 18)
-print(figc1_pdf)
+pdf(file = file.path(plot_dir, paste0("Figure_S6_Predictor_Correlation.pdf")), width = 10, height = 18)
+print(figs6_pdf)
 dev.off()
 
-pdf(file = file.path(plot_dir, paste0("fig_C01.pdf")), width = 10, height = 18)
-print(figc1_pdf)
+pdf(file = file.path(plot_dir, paste0("fig_S6.pdf")), width = 10, height = 18)
+print(figs6_pdf)
 dev.off()
 
 

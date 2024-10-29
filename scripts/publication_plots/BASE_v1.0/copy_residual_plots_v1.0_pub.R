@@ -14,14 +14,14 @@ fit_batch_version <- "BASE_v1.0"
 
 # copy the partial residual and response plots from the fitted model directory to the manuscript plot dir 
 file.copy(here("fitted_models", analysis_version, "GLMs", "BurntFraction_NCV", fit_batch_version, ncv_model, "All_Single_Predictors.png"), 
-          here("plots", analysis_version, "manuscript/Figure_E01_NCV_Partial_Residuals.png"), overwrite = TRUE )
+          here("plots", analysis_version, "manuscript/Figure_S7_NCV_Partial_Residuals.png"), overwrite = TRUE )
 file.copy(here("fitted_models", analysis_version, "GLMs", "BurntFraction_NCV", fit_batch_version, ncv_model, "All_Single_Predictors.pdf"), 
-          here("plots", analysis_version, "manuscript/Figure_E01_NCV_Partial_Residuals.pdf"), overwrite = TRUE )
+          here("plots", analysis_version, "manuscript/Figure_S7_NCV_Partial_Residuals.pdf"), overwrite = TRUE )
 file.copy(here("fitted_models", analysis_version, "GLMs", "BurntFraction_NCV", fit_batch_version, ncv_model, "All_Single_Predictors.pdf"), 
-          here("plots", analysis_version, "manuscript/fig_E01.pdf"), overwrite = TRUE) 
+          here("plots", analysis_version, "manuscript/fig_S7.pdf"), overwrite = TRUE) 
 file.copy(here("fitted_models", analysis_version, "GLMs", "BurntFraction_PureCropland", fit_batch_version, cropland_model, "All_Single_Predictors.png"), 
-          here("plots", analysis_version, "manuscript/Figure_E02_PureCropland_Partial_Residuals.png"), overwrite = TRUE )
+          here("plots", analysis_version, "manuscript/Figure_S8_PureCropland_Partial_Residuals.png"), overwrite = TRUE )
 file.copy(here("fitted_models", analysis_version, "GLMs", "BurntFraction_PureCropland", fit_batch_version, cropland_model, "All_Single_Predictors.pdf"), 
-          here("plots", analysis_version, "manuscript/Figure_E02_PureCropland_Partial_Residuals.pdf"), overwrite = TRUE )
+          here("plots", analysis_version, "manuscript/Figure_S8_PureCropland_Partial_Residuals.pdf"), overwrite = TRUE )
 file.copy(here("fitted_models", analysis_version, "GLMs", "BurntFraction_PureCropland", fit_batch_version, cropland_model, "All_Single_Predictors.pdf"), 
-          here("plots", analysis_version, "manuscript/fig_E02.pdf"), overwrite = TRUE )
+          here("plots", analysis_version, "manuscript/fig_S8.pdf"), overwrite = TRUE )

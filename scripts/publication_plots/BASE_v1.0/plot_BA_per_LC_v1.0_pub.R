@@ -268,11 +268,11 @@ for(this_group in all_groups) {
     fig1_seasonal <- seasonal_plot
   }
   else if(this_group$name == "Supp Figures NCV") {
-    magicPlot(p = seasonal_plot, filename = file.path(pub_results_dir, paste0("Figure_B05_NCV_Seasonal")),  width = 1800, height = 1500)
-    pdf(file = file.path(pub_results_dir, paste0("Figure_B05_NCV_Seasonal.pdf")), width = 14, height = 9)
+    magicPlot(p = seasonal_plot, filename = file.path(pub_results_dir, paste0("Figure_S5_NCV_Seasonal")),  width = 1800, height = 1500)
+    pdf(file = file.path(pub_results_dir, paste0("Figure_S5_NCV_Seasonal.pdf")), width = 14, height = 9)
     print(seasonal_plot)
     dev.off()
-    pdf(file = file.path(pub_results_dir, paste0("fig_B05.pdf")), width = 14, height = 9)
+    pdf(file = file.path(pub_results_dir, paste0("fig_S5.pdf")), width = 14, height = 9)
     print(seasonal_plot)
     dev.off() 
     
@@ -316,11 +316,11 @@ for(this_group in all_groups) {
     fig1_annual <- annual_plot_norm
   }
   else if(this_group$name == "Supp Figures NCV") {
-    magicPlot(p = annual_plot_norm, filename = file.path(pub_results_dir, paste0("Figure_B04_NCV_Annual")),  width = 1800, height = 1500)
-    pdf(file = file.path(pub_results_dir, paste0("Figure_B04_NCV_Annual.pdf")), width = 14, height = 9)
+    magicPlot(p = annual_plot_norm, filename = file.path(pub_results_dir, paste0("Figure_S4_NCV_Annual")),  width = 1800, height = 1500)
+    pdf(file = file.path(pub_results_dir, paste0("Figure_S4_NCV_Annual.pdf")), width = 14, height = 9)
     print(annual_plot_norm)
     dev.off()
-    pdf(file = file.path(pub_results_dir, paste0("fig_B04.pdf")), width = 14, height = 9)
+    pdf(file = file.path(pub_results_dir, paste0("fig_S4.pdf")), width = 14, height = 9)
     print(annual_plot_norm)
     dev.off()
   }
@@ -349,17 +349,17 @@ for(this_group in all_groups) {
     fig1_spatial <- spatial_plot
   }
   else if(this_group$name == "Supp Figures NCV") {
-    magicPlot(p = spatial_plot, filename = file.path(pub_results_dir, paste0("Figure_B03_NCV_BF_Map")),  width = 1800, height = 1500)
-    fig_B3 <- spatial_plot + theme(axis.text.x = element_text(angle = 45, 
+    magicPlot(p = spatial_plot, filename = file.path(pub_results_dir, paste0("Figure_S3_NCV_BF_Map")),  width = 1800, height = 1500)
+    fig_S3 <- spatial_plot + theme(axis.text.x = element_text(angle = 45, 
                                                          hjust = 1),
                               text = element_text(size = theme_get()$text$size * text_multiplier_pdf * 2.2),
                               panel.spacing = unit(2, "lines"))
     bar.height.unit <- unit(0.3, units = "npc")
-    pdf(file = file.path(pub_results_dir, paste0("Figure_B03_NCV_BF_Map.pdf")), width = 30, height = 24)
-    print(fig_B3)
+    pdf(file = file.path(pub_results_dir, paste0("Figure_S3_NCV_BF_Map.pdf")), width = 30, height = 24)
+    print(fig_S3)
     dev.off()
-    pdf(file = file.path(pub_results_dir, paste0("fig_B03.pdf")), width = 30, height = 24)
-    print(fig_B3)
+    pdf(file = file.path(pub_results_dir, paste0("fig_S3.pdf")), width = 30, height = 24)
+    print(fig_S3)
     dev.off()
   }
   
@@ -380,37 +380,37 @@ for(this_group in all_groups) {
   
   
   if(this_group$name == "Main Figures") {
-    magicPlot(p = lc_maps, filename = file.path(pub_results_dir, paste0("Figure_A01_NCV_and_Cropland_LC_Fractions")),  width = 1000, height = 700)
-    fig_B1 <- lc_maps + theme(axis.text.x = element_text(angle = 45, 
+    magicPlot(p = lc_maps, filename = file.path(pub_results_dir, paste0("Figure_S1_NCV_and_Cropland_LC_Fractions")),  width = 1000, height = 700)
+    fig_S1 <- lc_maps + theme(axis.text.x = element_text(angle = 45, 
                                                          hjust = 1),
                               text = element_text(size = theme_get()$text$size * text_multiplier_pdf * 1.8),
                               panel.spacing = unit(2, "lines"))
     bar.height.unit <- unit(0.2, units = "npc")
-    fig_B2 <- fig_B2 + guides(fill = guide_colorbar(barheight = bar.height.unit))
+    fig_S2 <- fig_S2 + guides(fill = guide_colorbar(barheight = bar.height.unit))
     
-    pdf(file = file.path(pub_results_dir, paste0("Figure_B01_NCV_and_Cropland_LC_Fractions.pdf")), width = 24, height = 14)
-    print(fig_B1)
+    pdf(file = file.path(pub_results_dir, paste0("Figure_S1_NCV_and_Cropland_LC_Fractions.pdf")), width = 24, height = 14)
+    print(fig_S1)
     dev.off()
-    pdf(file = file.path(pub_results_dir, paste0("fig_B01.pdf")), width = 24, height = 14)
-    print(fig_B1)
+    pdf(file = file.path(pub_results_dir, paste0("fig_S1.pdf")), width = 24, height = 14)
+    print(fig_S1)
     dev.off() 
   }
   else if(this_group$name == "Supp Figures NCV") {
     magicPlot(p = lc_maps, filename = file.path(pub_results_dir, paste0("Figure_A02_NCV_LC_Fractions")),  width = 1000, height = 1100)
     
-    fig_B2 <- lc_maps + theme(axis.text.x = element_text(angle = 45, 
+    fig_S2 <- lc_maps + theme(axis.text.x = element_text(angle = 45, 
                                                          hjust = 1,),
                               text = element_text(size = theme_get()$text$size * text_multiplier_pdf  * 2.2),  
                               panel.spacing = unit(2, "lines"))
     
     bar.height.unit <- unit(0.2, units = "npc")
-    fig_B2 <- fig_B2 + guides(fill = guide_colorbar(barheight = bar.height.unit))
+    fig_S2 <- fig_S2 + guides(fill = guide_colorbar(barheight = bar.height.unit))
     
-    pdf(file = file.path(pub_results_dir, paste0("Figure_B02_NCV_LC_Fractions.pdf")), width = 30, height = 24)
-    print(fig_B2)
+    pdf(file = file.path(pub_results_dir, paste0("Figure_S2_NCV_LC_Fractions.pdf")), width = 30, height = 24)
+    print(fig_S2)
     dev.off()
-    pdf(file = file.path(pub_results_dir, paste0("fig_B02.pdf")), width = 30, height = 24)
-    print(fig_B2)
+    pdf(file = file.path(pub_results_dir, paste0("fig_S2.pdf")), width = 30, height = 24)
+    print(fig_S2)
     dev.off()
   }
   

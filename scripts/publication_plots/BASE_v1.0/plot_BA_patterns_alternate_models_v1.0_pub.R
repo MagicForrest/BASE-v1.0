@@ -210,17 +210,17 @@ for(this_sens in sensitivity_list) {
   
   # paper plots
   
-  # Fig G02
+  # Fig S12
   if(this_sens$name == "Cropland_socioeconomics"){
     
     spatial_plot <- spatial_plot + theme(text = element_text(size = theme_get()$text$size * text.multiplier * 1.8))
     
-    magicPlot(p = spatial_plot, filename = file.path(manuscript_dir, paste0("Figure_G02_", this_sens$name)), width = 1500, height = 1800)
+    magicPlot(p = spatial_plot, filename = file.path(manuscript_dir, paste0("Figure_S12_", this_sens$name)), width = 1500, height = 1800)
     
-    pdf(file = file.path(manuscript_dir, paste0("Figure_G02_", this_sens$name, ".pdf")), width = 30, height = 26)
+    pdf(file = file.path(manuscript_dir, paste0("Figure_S12_", this_sens$name, ".pdf")), width = 30, height = 26)
     print(spatial_plot)
     dev.off()
-    pdf(file = file.path(manuscript_dir, paste0("fig_G02.pdf")), width = 30, height = 26)
+    pdf(file = file.path(manuscript_dir, paste0("fig_S12.pdf")), width = 30, height = 26)
     print(spatial_plot)
     dev.off()
     
@@ -243,15 +243,15 @@ for(this_sens in sensitivity_list) {
   print(seasonal_plot)
   magicPlot(p = seasonal_plot, filename = file.path(sensitivity_dir, paste("Sensitivity_Seasonal", this_sens$name, sep = "_")), width = 1600, height = 900)
   
-  # Fig F1
+  # Fig S9
   if(this_sens$name == "MEPI_and_FWI_not_interacting"){
     
-    magicPlot(p = seasonal_plot, filename = file.path(manuscript_dir, paste("Figure_F01", "Seasonal", this_sens$name, sep = "_")), width = 1600, height = 900)
+    magicPlot(p = seasonal_plot, filename = file.path(manuscript_dir, paste("Figure_S9", "Seasonal", this_sens$name, sep = "_")), width = 1600, height = 900)
     
-    pdf(file = file.path(manuscript_dir, paste0("Figure_F01_Seasonal_", this_sens$name, ".pdf")), width = 16, height = 9)
+    pdf(file = file.path(manuscript_dir, paste0("Figure_S9_Seasonal_", this_sens$name, ".pdf")), width = 16, height = 9)
     print(seasonal_plot)
     dev.off()
-    pdf(file = file.path(manuscript_dir, paste0("fig_F01.pdf")), width = 16, height = 9)
+    pdf(file = file.path(manuscript_dir, paste0("fig_S9.pdf")), width = 16, height = 9)
     print(seasonal_plot)
     dev.off()
     
@@ -276,29 +276,29 @@ for(this_sens in sensitivity_list) {
   
   # paper plots
   
-  # Fig G1
+  # Fig S11
   if(this_sens$name == "Cropland_socioeconomics"){
     
-    magicPlot(p = iav_plot, filename = file.path(manuscript_dir, paste("Figure_G01", "IAV", this_sens$name, sep = "_")), width = 1600, height = 900)
+    magicPlot(p = iav_plot, filename = file.path(manuscript_dir, paste("Figure_S11", "IAV", this_sens$name, sep = "_")), width = 1600, height = 900)
     
-    pdf(file = file.path(manuscript_dir, paste0("Figure_G01_IAV_", this_sens$name, ".pdf")), width = 16, height = 9)
+    pdf(file = file.path(manuscript_dir, paste0("Figure_S11_IAV_", this_sens$name, ".pdf")), width = 16, height = 9)
     print(iav_plot)
     dev.off()
-    pdf(file = file.path(manuscript_dir, paste0("fig_G01.pdf")), width = 16, height = 9)
+    pdf(file = file.path(manuscript_dir, paste0("fig_S11.pdf")), width = 16, height = 9)
     print(iav_plot)
     dev.off()
     
   }
   
-  # Fig G3
+  # Fig S13
   if(this_sens$name == "Omit_HDI_NCV"){
     
-    magicPlot(p = iav_plot, filename = file.path(manuscript_dir, paste("Figure_G03", "IAV", this_sens$name, sep = "_")), width = 1600, height = 900)
+    magicPlot(p = iav_plot, filename = file.path(manuscript_dir, paste("Figure_S13", "IAV", this_sens$name, sep = "_")), width = 1600, height = 900)
     
-    pdf(file = file.path(manuscript_dir, paste0("Figure_G03_IAV_", this_sens$name, ".pdf")), width = 16, height = 9)
+    pdf(file = file.path(manuscript_dir, paste0("Figure_S13_IAV_", this_sens$name, ".pdf")), width = 16, height = 9)
     print(iav_plot)
     dev.off()
-    pdf(file = file.path(manuscript_dir, paste0("fig_G03.pdf")), width = 16, height = 9)
+    pdf(file = file.path(manuscript_dir, paste0("fig_S13.pdf")), width = 16, height = 9)
     print(iav_plot)
     dev.off()
     
