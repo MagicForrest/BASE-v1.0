@@ -339,10 +339,11 @@ for(this_group in all_groups) {
   spatial_plot <- spatial_plot + scale_y_continuous(expand = c(0, 0)) 
   #spatial_plot <- spatial_plot + labs(title = this_group$name)
   spatial_plot <- spatial_plot + theme(text = element_text(size = theme_get()$text$size * text_multiplier_png),
-                                       axis.text.x = element_text(angle = 45))
+                                       axis.text.x = element_text(angle = 45, 
+                                                                  hjust = 1))
   spatial_plot <- spatial_plot +  geom_sf(data=overlay, 
                                           fill = "transparent", 
-                                          linewidth = 0.02,
+                                          linewidth = 0.1,
                                           colour="cyan")
   if(dev_plots)  magicPlot(p = spatial_plot, filename = file.path(results_dir, paste0(gsub(" ", "_", this_group$name), "_", "Maps")),  width = 1400, height = 1200)
   if(this_group$name == "Main Figures") {
@@ -386,7 +387,7 @@ for(this_group in all_groups) {
                               text = element_text(size = theme_get()$text$size * text_multiplier_pdf * 1.8),
                               panel.spacing = unit(2, "lines"))
     bar.height.unit <- unit(0.2, units = "npc")
-    fig_S2 <- fig_S2 + guides(fill = guide_colorbar(barheight = bar.height.unit))
+    fig_S1 <- fig_S1 + guides(fill = guide_colorbar(barheight = bar.height.unit))
     
     pdf(file = file.path(pub_results_dir, paste0("Figure_S1_NCV_and_Cropland_LC_Fractions.pdf")), width = 24, height = 14)
     print(fig_S1)
@@ -427,6 +428,8 @@ fig1 <- ggarrange(plotlist = list(fig1_histo, fig1_spatial, fig1_annual, fig1_se
                   font.label = list(size = 30, face = "bold"))
 print(fig1)
 magicPlot(p = fig1, filename = file.path(pub_results_dir, paste0("Figure_01_BA_Per_LCC")),  width = 1800, height = 1500)
+
+stop()
 
 # save in vector format for publication
 
